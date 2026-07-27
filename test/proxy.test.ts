@@ -90,6 +90,31 @@ test("proxy admits authenticated requests when locked", async () => {
   }
 });
 
+test("Vercel reuses the static SPA shell for authenticated deep links", async () => {
+  const prev = {
+    password: process.env.KB_PASSWORD,
+    runtime: process.env.CABINET_VERCEL_RUNTIME,
+  };
+  process.env.KB_PASSWORD = "secret";
+  process.env.CABINET_VERCEL_RUNTIME = "1";
+  try {
+    const token = await deriveAuthToken("secret", getAuthSalt());
+    const res = await proxy(
+      makeReq("/integrations/api-keys", { "kb-auth": token })
+    );
+    assert.equal(res.status, 200);
+    assert.equal(
+      new URL(res.headers.get("x-middleware-rewrite") || "").pathname,
+      "/"
+    );
+  } finally {
+    if (prev.password === undefined) delete process.env.KB_PASSWORD;
+    else process.env.KB_PASSWORD = prev.password;
+    if (prev.runtime === undefined) delete process.env.CABINET_VERCEL_RUNTIME;
+    else process.env.CABINET_VERCEL_RUNTIME = prev.runtime;
+  }
+});
+
 // End-to-end guard for the scheduler-daemon bug: the cookie the daemon attaches
 // (authCookieHeader) must satisfy the SAME gate (proxy) on an /api/* route, or
 // every scheduled job + heartbeat 401s silently once KB_PASSWORD is set. Both

@@ -11,6 +11,8 @@ import {
   resolveAgentLibraryDir,
 } from "@/lib/agents/library-manager";
 import { ensureAgentScaffold } from "@/lib/agents/scaffold";
+import { defaultAdapterTypeForProvider } from "@/lib/agents/adapters";
+import { getDefaultProviderId } from "@/lib/agents/provider-runtime";
 import { getRoomConfig, type RoomType } from "@/lib/onboarding/rooms";
 
 // Global, app-level config stays at the data-dir root (the "home" container) so
@@ -287,7 +289,20 @@ export async function POST(req: NextRequest) {
           .replace(/\{\{workspace_description\}\}/g, answers.description || "")
           .replace(/\{\{home_name\}\}/g, homeName)
           .replace(/\{\{goals\}\}/g, answers.goals || answers.priority || "");
-        await fs.writeFile(personaPath, injected);
+        if (process.env.CABINET_VERCEL_RUNTIME === "1") {
+          const parsed = matter(injected);
+          const provider = getDefaultProviderId();
+          await fs.writeFile(
+            personaPath,
+            matter.stringify(parsed.content, {
+              ...parsed.data,
+              provider,
+              adapterType: defaultAdapterTypeForProvider(provider),
+            })
+          );
+        } else {
+          await fs.writeFile(personaPath, injected);
+        }
       } catch {
         // Ignore injection errors
       }
@@ -316,13 +331,21 @@ export async function POST(req: NextRequest) {
         await fs.mkdir(agentDir, { recursive: true });
         const personaBody =
           (firstAgent.instructions || "").trim() || `You are ${agentName}.`;
+        const requestedProvider = firstAgent.provider?.trim() || "claude-code";
+        const provider =
+          process.env.CABINET_VERCEL_RUNTIME === "1"
+            ? getDefaultProviderId()
+            : requestedProvider;
         const personaMd = matter.stringify(`\n${personaBody}\n`, {
           name: agentName,
           slug,
           emoji: "🤖",
           type: "specialist",
           role: (firstAgent.role || "").trim(),
-          provider: firstAgent.provider?.trim() || "claude-code",
+          provider,
+          ...(process.env.CABINET_VERCEL_RUNTIME === "1"
+            ? { adapterType: defaultAdapterTypeForProvider(provider) }
+            : {}),
           heartbeat: firstAgent.heartbeat?.trim() || "",
           heartbeatEnabled: firstAgent.heartbeatEnabled === true,
           budget: 100,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { providerRegistry } from "@/lib/agents/provider-registry";
+import { isDirectApiProviderId } from "@/lib/agents/providers/direct-api";
 
 interface CachedStatus {
   providers: { id: string; name: string; available: boolean; authenticated: boolean }[];
@@ -20,7 +21,9 @@ export async function GET(req: Request) {
       return NextResponse.json(cachedResult);
     }
 
-    const providers = providerRegistry.listAll();
+    const providers = process.env.CABINET_VERCEL_RUNTIME === "1"
+      ? providerRegistry.listAll().filter((provider) => isDirectApiProviderId(provider.id))
+      : providerRegistry.listAll();
     const results = await Promise.all(
       providers.map(async (p) => {
         const status = await p.healthCheck();

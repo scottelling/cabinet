@@ -685,6 +685,172 @@ export async function startConversationRun(
       }
     : baseAdapterConfig;
 
+  const useInProcessRunner =
+    process.env.CABINET_TASK_RUNNER === "inprocess" ||
+    process.env.CABINET_VERCEL_RUNTIME === "1";
+
+  if (useInProcessRunner) {
+    const startedAt = Date.now();
+    const adapter = agentAdapterRegistry.get(resolvedAdapterType);
+    const cabinetPath = meta.cabinetPath || input.cabinetPath;
+    const complete = async (options: {
+      status: "completed" | "failed";
+      output: string;
+      exitCode: number;
+      usage?: import("./adapters/types").AdapterUsageSummary;
+      classification?: import("../../types/conversations").ConversationErrorClassification | null;
+      errorCode?: string;
+    }): Promise<ConversationMeta> => {
+      const finalized = await finalizeConversation(
+        meta.id,
+        {
+          status: options.status,
+          output: options.output,
+          exitCode: options.exitCode,
+          tokens: options.usage
+            ? {
+                input: options.usage.inputTokens,
+                output: options.usage.outputTokens,
+                cache: options.usage.cachedInputTokens,
+                total:
+                  options.usage.inputTokens + options.usage.outputTokens,
+              }
+            : undefined,
+          errorKind: options.classification?.kind,
+          errorHint: options.classification?.hint,
+          errorRetryAfterSec: options.classification?.retryAfterSec,
+        },
+        cabinetPath
+      );
+      const finalMeta = finalized || meta;
+      const durationMs = Date.now() - startedAt;
+      emitTelemetry(
+        options.status === "completed"
+          ? "agent.run.completed"
+          : "agent.run.failed",
+        {
+          provider: resolvedProviderId,
+          adapterType: resolvedAdapterType,
+          durationMs,
+          ...(options.status === "completed"
+            ? { success: true }
+            : { errorCode: options.errorCode || options.classification?.kind || "RunFailed" }),
+        }
+      );
+      emitTelemetry("task.completed", { durationMs, status: options.status });
+      if (input.onComplete) {
+        await input.onComplete({
+          meta: finalMeta,
+          output: options.output,
+          status: options.status,
+        });
+      }
+      return finalMeta;
+    };
+
+    emitTelemetry("agent.run.started", {
+      provider: resolvedProviderId,
+      adapterType: resolvedAdapterType,
+    });
+    emitTelemetry("task.created", { source: input.trigger });
+
+    if (!adapter?.execute) {
+      const message = `Adapter \`${resolvedAdapterType}\` is not available for in-process conversation runs.`;
+      await appendConversationTranscript(meta.id, `${message}\n`, cabinetPath);
+      return complete({
+        status: "failed",
+        output: message,
+        exitCode: 1,
+        errorCode: "AdapterUnavailable",
+      });
+    }
+
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+    try {
+      const configuredTimeoutMs = input.timeoutSeconds
+        ? input.timeoutSeconds * 1000
+        : DEFAULT_RUN_TIMEOUT_MS;
+      const timeoutMs =
+        process.env.CABINET_VERCEL_RUNTIME === "1"
+          ? Math.min(configuredTimeoutMs, 280_000)
+          : configuredTimeoutMs;
+      const result = await adapter.execute({
+        runId: meta.id,
+        adapterType: adapter.type,
+        config: spawnAdapterConfig || {},
+        prompt: finalPrompt,
+        cwd:
+          input.cwd ||
+          resolveAgentCwd(cabinetPath, skillsPersona?.workdir),
+        timeoutMs,
+        onLog: async (stream, chunk) => {
+          if (stream === "stderr") {
+            stderrChunks.push(chunk);
+          } else {
+            stdoutChunks.push(chunk);
+          }
+          await appendConversationTranscript(meta.id, chunk, cabinetPath);
+        },
+      });
+      const output =
+        result.output?.trim() ||
+        stdoutChunks.join("").trim() ||
+        stderrChunks.join("").trim() ||
+        result.errorMessage?.trim() ||
+        "(no response)";
+      if (stdoutChunks.length === 0 && stderrChunks.length === 0) {
+        await appendConversationTranscript(meta.id, `${output}\n`, cabinetPath);
+      }
+      const failed =
+        result.exitCode !== 0 || result.timedOut || Boolean(result.errorMessage);
+      let classification:
+        | import("../../types/conversations").ConversationErrorClassification
+        | null = null;
+      if (failed && adapter.classifyError) {
+        try {
+          classification = adapter.classifyError(
+            [stderrChunks.join(""), result.errorMessage || ""]
+              .filter(Boolean)
+              .join("\n"),
+            result.exitCode
+          );
+        } catch {
+          classification = { kind: "unknown" };
+        }
+      }
+      return complete({
+        status: failed ? "failed" : "completed",
+        output,
+        exitCode: failed ? result.exitCode ?? 1 : 0,
+        usage: result.usage,
+        classification,
+        errorCode: result.errorCode || undefined,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown adapter error";
+      await appendConversationTranscript(meta.id, `${message}\n`, cabinetPath);
+      let classification:
+        | import("../../types/conversations").ConversationErrorClassification
+        | null = null;
+      if (adapter.classifyError) {
+        try {
+          classification = adapter.classifyError(message, 1);
+        } catch {
+          classification = { kind: "unknown" };
+        }
+      }
+      return complete({
+        status: "failed",
+        output: message,
+        exitCode: 1,
+        classification,
+        errorCode: error instanceof Error ? error.name : "AdapterError",
+      });
+    }
+  }
+
   try {
     await createDaemonSession({
       id: meta.id,

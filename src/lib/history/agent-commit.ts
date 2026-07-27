@@ -36,6 +36,8 @@ async function agentDisplayName(
 }
 
 export async function commitAgentRun(meta: ConversationMeta): Promise<void> {
+  if (process.env.CABINET_VERCEL_RUNTIME === "1") return;
+
   try {
     const cabinetRootVirtual = normalizeCabinetRoot(meta.cabinetPath);
     const handle = await repoForCabinetRoot(cabinetRootVirtual);

@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { cabinetTier, storageCapMb, storageUsedBytes } from "@/lib/cloud/tier";
+import {
+  DIRECT_API_CONFIGS,
+  DIRECT_API_PROVIDER_IDS,
+  readDirectApiKey,
+} from "@/lib/agents/providers/direct-api";
 
 // Surfaces whether this instance is the hosted (Cabinet Cloud) edition and, if
 // so, whether Claude credentials have been provisioned yet. Drives the in-app
@@ -19,6 +24,11 @@ function claudeConfigDir(): string {
  * login). Either is enough to run agents, so the banner clears on the first one.
  */
 function isClaudeConnected(): boolean {
+  if (process.env.CABINET_VERCEL_RUNTIME === "1") {
+    return DIRECT_API_PROVIDER_IDS.some((id) =>
+      Boolean(readDirectApiKey(DIRECT_API_CONFIGS[id]))
+    );
+  }
   const dir = claudeConfigDir();
   return (
     existsSync(path.join(dir, ".oauth-token")) ||
@@ -34,6 +44,7 @@ export async function GET() {
   }
   return NextResponse.json({
     cloud: true,
+    aiConnected: isClaudeConnected(),
     claudeConnected: isClaudeConnected(),
     panelUrl: process.env.CABINET_CLOUD_PANEL_URL || null,
     tier: cabinetTier(),

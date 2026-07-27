@@ -26,5 +26,6 @@ export interface ProviderTypeInfo {
  * gating (enabled / available / authenticated) compose with `isProviderReady`.
  */
 export function isAgentProviderSelectable(provider: ProviderTypeInfo): boolean {
-  return provider.type === "cli";
+  if (provider.type === "cli") return true;
+  return process.env.NEXT_PUBLIC_CABINET_EDITION === "cloud";
 }

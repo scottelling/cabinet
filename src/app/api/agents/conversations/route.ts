@@ -248,6 +248,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, conversation }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[conversations] failed to create conversation", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

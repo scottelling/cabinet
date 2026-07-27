@@ -6,6 +6,53 @@ import {
   hasValidKbAuthCookie,
 } from "@/lib/auth/request-gate";
 
+const CLOUD_RUNTIME_PATH = "/api/cloud-runtime";
+
+function shouldUseVercelSpaShell(pathname: string): boolean {
+  if (process.env.CABINET_VERCEL_RUNTIME !== "1") return false;
+  if (pathname === "/" || pathname === "/login") return false;
+  return !pathname.startsWith("/api/");
+}
+
+function shouldUseVercelCloudRuntime(pathname: string): boolean {
+  if (process.env.CABINET_VERCEL_RUNTIME !== "1") return false;
+  if (!pathname.startsWith("/api/")) return false;
+  if (pathname === CLOUD_RUNTIME_PATH) return false;
+  if (pathname.startsWith("/api/auth/")) return false;
+  if (pathname.startsWith("/api/health")) return false;
+  if (pathname === "/api/cloud/status") return false;
+  if (pathname === "/api/telemetry") return false;
+  if (pathname === "/api/system/client-log") return false;
+  return true;
+}
+
+function continueRequest(req: NextRequest, requestHeaders?: Headers): NextResponse {
+  // The root page is statically rendered, while the catch-all page is rendered
+  // on demand. Reuse the static shell for clean SPA URLs on Vercel so a deep
+  // link never evaluates optional desktop-only dependencies in a serverless
+  // renderer. A rewrite preserves the visible URL, so AppShell still opens the
+  // requested room, integration, task, or settings surface after hydration.
+  if (shouldUseVercelSpaShell(req.nextUrl.pathname)) {
+    const destination = req.nextUrl.clone();
+    destination.pathname = "/";
+    const headers = requestHeaders || req.headers;
+    return NextResponse.rewrite(destination, { request: { headers } });
+  }
+
+  if (!shouldUseVercelCloudRuntime(req.nextUrl.pathname)) {
+    return requestHeaders
+      ? NextResponse.next({ request: { headers: requestHeaders } })
+      : NextResponse.next();
+  }
+
+  const destination = req.nextUrl.clone();
+  destination.pathname = CLOUD_RUNTIME_PATH;
+  destination.searchParams.set("__cabinet_path", req.nextUrl.pathname);
+  const headers = new Headers(requestHeaders || req.headers);
+  headers.set("x-cabinet-original-path", req.nextUrl.pathname);
+  return NextResponse.rewrite(destination, { request: { headers } });
+}
+
 // ---------------------------------------------------------------------------
 // Cabinet Cloud gate (CABINET_CLOUD=1)
 // ---------------------------------------------------------------------------
@@ -29,7 +76,7 @@ async function cloudProxy(req: NextRequest): Promise<NextResponse> {
   // Liveness/readiness probes must answer without a user session so the host
   // agent / orchestrator can tell a booting container from a dead one.
   if (pathname.startsWith("/api/health")) {
-    return NextResponse.next();
+    return continueRequest(req);
   }
 
   const sub = await cloudUserSub(req);
@@ -55,7 +102,7 @@ async function cloudProxy(req: NextRequest): Promise<NextResponse> {
   // from a verified token — never spoofed by the caller.
   const headers = new Headers(req.headers);
   headers.set("x-cabinet-user", sub);
-  return NextResponse.next({ request: { headers } });
+  return continueRequest(req, headers);
 }
 
 export async function proxy(req: NextRequest) {
@@ -70,19 +117,19 @@ export async function proxy(req: NextRequest) {
 
   // Auth disabled — no password set
   if (!isAuthEnabled()) {
-    return NextResponse.next();
+    return continueRequest(req);
   }
 
   const { pathname } = req.nextUrl;
 
   // Allow login page and login API
   if (pathname === "/login" || pathname === "/api/auth/login" || pathname === "/api/auth/check") {
-    return NextResponse.next();
+    return continueRequest(req);
   }
 
   // Allow health check
   if (pathname.startsWith("/api/health")) {
-    return NextResponse.next();
+    return continueRequest(req);
   }
 
   // Check auth cookie (constant-time; expected token is memoized so this is
@@ -96,17 +143,14 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  return NextResponse.next();
+  return continueRequest(req);
 }
 
 export const config = {
   matcher: [
-    // Protect all routes except static files and Next.js internals.
-    // /api/upload is excluded on purpose: matched requests get their body
-    // cloned into memory by Next (and silently truncated at 10MB —
-    // proxyClientMaxBodySize), which breaks and bloats large streaming
-    // uploads. That route enforces the identical gate itself via
-    // requireApiAuth() from @/lib/auth/request-gate.
-    "/((?!_next/static|_next/image|favicon.ico|api/upload).*)",
+    // Protect all routes except static files and Next.js internals. The Vercel
+    // edition deliberately sends API uploads through the cloud runtime so the
+    // resulting files are included in the durable workspace snapshot.
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
