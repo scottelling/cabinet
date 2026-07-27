@@ -25,11 +25,12 @@ async function dispatch(request: NextRequest): Promise<Response> {
   }
 
   const method = request.method.toUpperCase() as CloudRouteMethod;
-  const handler = match.module[method];
+  const routeModule = await match.load();
+  const handler = routeModule[method];
   if (!handler) {
     return NextResponse.json(
       { error: `Method ${method} is not supported for ${originalPath}.` },
-      { status: 405, headers: { Allow: Object.keys(match.module).join(", ") } }
+      { status: 405, headers: { Allow: Object.keys(routeModule).join(", ") } }
     );
   }
 
