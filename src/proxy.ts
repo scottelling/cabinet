@@ -8,6 +8,12 @@ import {
 
 const CLOUD_RUNTIME_PATH = "/api/cloud-runtime";
 
+function shouldUseVercelSpaShell(pathname: string): boolean {
+  if (process.env.CABINET_VERCEL_RUNTIME !== "1") return false;
+  if (pathname === "/" || pathname === "/login") return false;
+  return !pathname.startsWith("/api/");
+}
+
 function shouldUseVercelCloudRuntime(pathname: string): boolean {
   if (process.env.CABINET_VERCEL_RUNTIME !== "1") return false;
   if (!pathname.startsWith("/api/")) return false;
@@ -21,6 +27,18 @@ function shouldUseVercelCloudRuntime(pathname: string): boolean {
 }
 
 function continueRequest(req: NextRequest, requestHeaders?: Headers): NextResponse {
+  // The root page is statically rendered, while the catch-all page is rendered
+  // on demand. Reuse the static shell for clean SPA URLs on Vercel so a deep
+  // link never evaluates optional desktop-only dependencies in a serverless
+  // renderer. A rewrite preserves the visible URL, so AppShell still opens the
+  // requested room, integration, task, or settings surface after hydration.
+  if (shouldUseVercelSpaShell(req.nextUrl.pathname)) {
+    const destination = req.nextUrl.clone();
+    destination.pathname = "/";
+    const headers = requestHeaders || req.headers;
+    return NextResponse.rewrite(destination, { request: { headers } });
+  }
+
   if (!shouldUseVercelCloudRuntime(req.nextUrl.pathname)) {
     return requestHeaders
       ? NextResponse.next({ request: { headers: requestHeaders } })
