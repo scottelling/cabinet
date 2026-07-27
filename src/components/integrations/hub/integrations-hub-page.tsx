@@ -35,12 +35,23 @@ const TABS: { id: HubTab; label: string }[] = [
 
 export function IntegrationsHubPage() {
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<HubTab>("integrations");
+  const sectionSlug = useAppStore((s) =>
+    s.section.type === "integrations" ? s.section.slug ?? null : null,
+  );
+  const [tab, setTab] = useState<HubTab>(
+    sectionSlug === "api-keys" ? "keys" : "integrations",
+  );
   // The selected connector lives in the route (section.slug) so the address bar
   // reflects it and it deep-links / back-buttons.
   const selectedId = useAppStore((s) =>
-    s.section.type === "integrations" ? s.section.slug ?? null : null,
+    s.section.type === "integrations" && s.section.slug !== "api-keys"
+      ? s.section.slug ?? null
+      : null,
   );
+
+  useEffect(() => {
+    if (sectionSlug === "api-keys") setTab("keys");
+  }, [sectionSlug]);
   // The sub-product card the user clicked (e.g. "microsoft-teams") when it
   // differs from the suite slug it opens. Lets the detail page pick the right
   // default account mode.

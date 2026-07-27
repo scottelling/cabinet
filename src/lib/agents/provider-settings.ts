@@ -3,6 +3,7 @@ import fsp from "fs/promises";
 import path from "path";
 import { DATA_DIR } from "@/lib/storage/path-utils";
 import { providerRegistry } from "./provider-registry";
+import { isDirectApiProviderId } from "./providers/direct-api";
 
 const CONFIG_DIR = path.join(DATA_DIR, ".agents", ".config");
 const PROVIDERS_FILE = path.join(CONFIG_DIR, "providers.json");
@@ -15,7 +16,10 @@ export interface ProviderSettings {
 }
 
 function knownProviderIds(): string[] {
-  return providerRegistry.listAll().map((provider) => provider.id);
+  const ids = providerRegistry.listAll().map((provider) => provider.id);
+  return process.env.CABINET_VERCEL_RUNTIME === "1"
+    ? ids.filter(isDirectApiProviderId)
+    : ids;
 }
 
 export function normalizeProviderSettings(raw: unknown): ProviderSettings {

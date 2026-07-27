@@ -37,6 +37,12 @@ async function getGit(): Promise<SimpleGit | null> {
  * profile. Same signature as the legacy version so call sites are untouched.
  */
 export function autoCommit(pagePath: string, action: "Update" | "Add" | "Delete") {
+  // Vercel persists the complete Cabinet workspace as an atomic private Blob
+  // snapshot. Initializing an ephemeral Git repository on every function
+  // instance adds work without creating durable history, so cloud writes rely
+  // on Blob versions instead.
+  if (process.env.CABINET_VERCEL_RUNTIME === "1") return;
+
   void import("@/lib/history/engine")
     .then(({ recordMutation }) =>
       recordMutation({

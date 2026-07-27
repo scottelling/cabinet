@@ -20,6 +20,7 @@ import { geminiLocalAdapter } from "./gemini-local";
 import { grokLocalAdapter } from "./grok-local";
 import { openCodeLocalAdapter } from "./opencode-local";
 import { piLocalAdapter } from "./pi-local";
+import { directApiAdapters } from "./direct-api";
 
 export const LEGACY_ADAPTER_BY_PROVIDER_ID: Record<string, string> = {
   "claude-code": "claude_code_legacy",
@@ -41,6 +42,9 @@ export const DEFAULT_ADAPTER_BY_PROVIDER_ID: Record<string, string> = {
   "pi": piLocalAdapter.type,
   "grok-cli": grokLocalAdapter.type,
   "copilot-cli": copilotLocalAdapter.type,
+  ...Object.fromEntries(
+    directApiAdapters.map((adapter) => [adapter.providerId, adapter.type])
+  ),
 };
 
 export const LEGACY_PROVIDER_ID_BY_ADAPTER: Record<string, string> = Object.fromEntries(
@@ -198,6 +202,13 @@ agentAdapterRegistry.register(legacyOpenCodeAdapter);
 agentAdapterRegistry.register(legacyPiAdapter);
 agentAdapterRegistry.register(legacyGrokCliAdapter);
 agentAdapterRegistry.register(legacyCopilotCliAdapter);
+
+if (process.env.CABINET_VERCEL_RUNTIME === "1") {
+  for (const adapter of directApiAdapters) {
+    agentAdapterRegistry.register(adapter);
+  }
+  agentAdapterRegistry.defaultAdapterType = "openai_api";
+}
 
 export function defaultAdapterTypeForProvider(
   providerId?: string | null

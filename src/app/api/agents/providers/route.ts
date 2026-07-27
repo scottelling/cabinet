@@ -14,6 +14,7 @@ import {
   getProviderUsage,
   updateProviderSettingsWithMigrations,
 } from "@/lib/agents/provider-management";
+import { isDirectApiProviderId } from "@/lib/agents/providers/direct-api";
 
 // Short in-memory cache: the GET response is driven by spawning 8 CLI probes,
 // and the page fires this endpoint on every mount. Cache shared across requests.
@@ -22,7 +23,9 @@ let cachedResponse: { body: unknown; expiresAt: number } | null = null;
 let inflightBuild: Promise<unknown> | null = null;
 
 async function buildResponse() {
-  const providers = providerRegistry.listAll();
+  const providers = process.env.CABINET_VERCEL_RUNTIME === "1"
+    ? providerRegistry.listAll().filter((provider) => isDirectApiProviderId(provider.id))
+    : providerRegistry.listAll();
   const settings = await readProviderSettings();
   const usage = await getProviderUsage();
 

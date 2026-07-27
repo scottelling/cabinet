@@ -985,15 +985,17 @@ export function StatusBar() {
             <span className="@max-[820px]:hidden">{t("status:git2.sync")}</span>
           </button>
         )}
-        <button
-          onClick={toggleTerminal}
-          aria-label={terminalOpen ? t("status:git2.newTerminalTab") : t("status:git2.openTerminal")}
-          title={terminalOpen ? t("status:git2.newTerminalTab") : t("status:git2.openTerminal")}
-          className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 ${terminalOpen ? "text-primary" : ""}`}
-        >
-          <Terminal className="h-3 w-3" />
-          <span className="@max-[820px]:hidden">{t("status:git2.terminal")}</span>
-        </button>
+        {!isCloudEdition && (
+          <button
+            onClick={toggleTerminal}
+            aria-label={terminalOpen ? t("status:git2.newTerminalTab") : t("status:git2.openTerminal")}
+            title={terminalOpen ? t("status:git2.newTerminalTab") : t("status:git2.openTerminal")}
+            className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 ${terminalOpen ? "text-primary" : ""}`}
+          >
+            <Terminal className="h-3 w-3" />
+            <span className="@max-[820px]:hidden">{t("status:git2.terminal")}</span>
+          </button>
+        )}
       </div>
       {/* Audit #018: status-bar carries live state on the left (status pill,
           uncommitted, save state, sync). Help / Discord / Contribute /

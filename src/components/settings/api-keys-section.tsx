@@ -46,7 +46,7 @@ const PRESETS: Preset[] = [
     id: "anthropic",
     label: "Anthropic",
     envVar: "ANTHROPIC_API_KEY",
-    hint: "Used when the Claude CLI is configured to use API-key auth",
+    hint: "Runs Cabinet agents directly through the Anthropic API",
   },
   {
     id: "github",
@@ -57,8 +57,14 @@ const PRESETS: Preset[] = [
   {
     id: "google-ai",
     label: "Google AI Studio",
-    envVar: "GOOGLE_AI_API_KEY",
-    hint: "For Gemini-related skills that don't use the Gemini CLI directly",
+    envVar: "GEMINI_API_KEY",
+    hint: "Runs Cabinet agents directly through the Gemini API",
+  },
+  {
+    id: "xai",
+    label: "xAI",
+    envVar: "XAI_API_KEY",
+    hint: "Runs Cabinet agents directly through the xAI API",
   },
   {
     id: "google-sa",
@@ -192,9 +198,11 @@ export function ApiKeysSection(): React.ReactElement {
         )}
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        Stored locally in <code className="text-[11px]">.cabinet.env</code> at the
-        project root. Gitignored, owner-only file permissions. Available to skills
-        and CLIs at spawn time.
+        {process.env.NEXT_PUBLIC_CABINET_EDITION === "cloud" ? (
+          <>Encrypted before being saved in your private Cabinet storage. Keys are sent only to the provider you choose.</>
+        ) : (
+          <>Stored locally in <code className="text-[11px]">.cabinet.env</code> at the project root. Gitignored, owner-only file permissions.</>
+        )}
       </p>
 
       {loading ? (

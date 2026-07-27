@@ -66,7 +66,6 @@ import { cn } from "@/lib/utils";
 import { showError } from "@/lib/ui/toast";
 import { confirmDialog } from "@/lib/ui/confirm";
 import type { ProviderInfo } from "@/types/agents";
-import { ConnectClaudeCard } from "@/components/settings/connect-claude-card";
 import { UserAvatar } from "@/components/layout/user-avatar";
 import {
   refreshUserProfile,
@@ -1342,8 +1341,6 @@ export function SettingsPage() {
           {/* Providers Tab */}
           {tab === "providers" && (
             <>
-              {/* Cloud: one-click Connect-Claude (setup-token) — inert on desktop/self-host. */}
-              <ConnectClaudeCard />
               <div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-[14px] font-semibold">{t("settings:providers.title")}</h3>
@@ -1399,7 +1396,9 @@ export function SettingsPage() {
                       </div>
 
                       <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                        {t("settings:providers.cliAgents")}
+                        {process.env.NEXT_PUBLIC_CABINET_EDITION === "cloud"
+                          ? "AI providers"
+                          : t("settings:providers.cliAgents")}
                       </h4>
                       <div className="space-y-2">
                         {providers

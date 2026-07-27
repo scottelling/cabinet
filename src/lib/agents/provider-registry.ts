@@ -7,6 +7,7 @@ import { geminiCliProvider } from "./providers/gemini-cli";
 import { grokCliProvider } from "./providers/grok-cli";
 import { openCodeProvider } from "./providers/opencode";
 import { piProvider } from "./providers/pi";
+import { directApiProviders } from "./providers/direct-api";
 
 class ProviderRegistryImpl implements ProviderRegistry {
   providers = new Map<string, AgentProvider>();
@@ -51,6 +52,13 @@ providerRegistry.register(openCodeProvider);
 providerRegistry.register(piProvider);
 providerRegistry.register(grokCliProvider);
 providerRegistry.register(copilotCliProvider);
+
+if (process.env.CABINET_VERCEL_RUNTIME === "1") {
+  for (const provider of directApiProviders) {
+    providerRegistry.register(provider);
+  }
+  providerRegistry.defaultProvider = "openai-api";
+}
 
 // Future providers will be registered here:
 // providerRegistry.register(anthropicApiProvider);

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { KeyRound } from "lucide-react";
+import { useAppStore } from "@/stores/app-store";
 
 // Hosted-edition (CABINET_CLOUD=1) affordance: until the tenant's Claude
 // credentials are provisioned, agents can't run — so prompt the user to connect
@@ -19,8 +20,7 @@ import { ExternalLink } from "lucide-react";
 
 interface CloudStatus {
   cloud: boolean;
-  claudeConnected: boolean;
-  panelUrl: string | null;
+  aiConnected?: boolean;
   tier?: "free" | "pro";
 }
 
@@ -52,11 +52,7 @@ export function CloudConnectClaudeBanner() {
 
   // Free tier can't run agents at all, so "connect Claude to power your agents" is both pointless and
   // contradicts the "AI is paused — upgrade" banner. Hide it; the upgrade nudge is the only CTA there.
-  if (!status || !status.cloud || status.claudeConnected || status.tier === "free") return null;
-
-  const connectHref = status.panelUrl
-    ? `${status.panelUrl.replace(/\/$/, "")}/connect`
-    : null;
+  if (!status || !status.cloud || status.aiConnected || status.tier === "free") return null;
 
   return (
     <div
@@ -64,28 +60,24 @@ export function CloudConnectClaudeBanner() {
       className="ms-2.5 mt-2 mb-1.5 flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/[0.06] px-3.5 py-2.5 text-[12px] text-foreground shadow-sm"
     >
       <div className="flex-1 min-w-0">
-        <span className="font-medium">Connect Claude to power your agents</span>
+        <span className="font-medium">Add an AI provider key to power your agents</span>
         <span className="ms-2 text-muted-foreground">
-          Your agents need a Claude subscription. Connect once to start running tasks.
+          Choose OpenAI, Anthropic, Gemini, or xAI. Cabinet sends requests directly to your provider.
         </span>
       </div>
-      {connectHref ? (
-        <a
-          href={connectHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="-my-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Connect Claude
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-        </a>
-      ) : (
-        // No panel URL configured — fall back to the terminal command the user
-        // can run inside their cabinet to provision the token.
-        <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 font-mono text-[11px] text-muted-foreground">
-          claude setup-token
-        </span>
-      )}
+      <button
+        type="button"
+        onClick={() =>
+          useAppStore.getState().setSection({
+            type: "integrations",
+            slug: "api-keys",
+          })
+        }
+        className="-my-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        Add API key
+        <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
     </div>
   );
 }

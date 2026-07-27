@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { PROJECT_ROOT } from "./runtime-config";
+import { getManagedDataDir } from "./runtime-config";
 
 /**
  * `.cabinet.env` is a plain `KEY=value`-per-line file at the cabinet root,
@@ -22,8 +24,21 @@ import { PROJECT_ROOT } from "./runtime-config";
  */
 
 const CABINET_ENV_FILENAME = ".cabinet.env";
+const CLOUD_SECRET_PATH = path.join(
+  ".cabinet-state",
+  "secrets",
+  "api-keys.enc"
+);
+const CLOUD_SECRET_AAD = Buffer.from("cabinet-cloud-api-keys-v1");
+
+function isCloudRuntime(): boolean {
+  return process.env.CABINET_VERCEL_RUNTIME === "1";
+}
 
 export function cabinetEnvPath(): string {
+  if (isCloudRuntime()) {
+    return path.join(getManagedDataDir(), CLOUD_SECRET_PATH);
+  }
   return path.join(PROJECT_ROOT, CABINET_ENV_FILENAME);
 }
 
@@ -58,6 +73,60 @@ function parseEnvText(text: string): Record<string, string> {
   return out;
 }
 
+function cloudEncryptionKey(): Buffer {
+  const secret = process.env.CABINET_SECRETS_KEY?.trim();
+  if (!secret) {
+    throw new Error(
+      "CABINET_SECRETS_KEY is required to store API keys in the hosted edition."
+    );
+  }
+  return crypto.scryptSync(secret, "cabinet-cloud-api-keys", 32);
+}
+
+function encryptCloudText(text: string): string {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", cloudEncryptionKey(), iv);
+  cipher.setAAD(CLOUD_SECRET_AAD);
+  const ciphertext = Buffer.concat([
+    cipher.update(text, "utf8"),
+    cipher.final(),
+  ]);
+  return JSON.stringify({
+    version: 1,
+    iv: iv.toString("base64"),
+    tag: cipher.getAuthTag().toString("base64"),
+    ciphertext: ciphertext.toString("base64"),
+  });
+}
+
+function decryptCloudText(text: string): string {
+  const envelope = JSON.parse(text) as {
+    version?: number;
+    iv?: string;
+    tag?: string;
+    ciphertext?: string;
+  };
+  if (
+    envelope.version !== 1 ||
+    !envelope.iv ||
+    !envelope.tag ||
+    !envelope.ciphertext
+  ) {
+    throw new Error("Unsupported hosted API-key store format.");
+  }
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    cloudEncryptionKey(),
+    Buffer.from(envelope.iv, "base64")
+  );
+  decipher.setAAD(CLOUD_SECRET_AAD);
+  decipher.setAuthTag(Buffer.from(envelope.tag, "base64"));
+  return Buffer.concat([
+    decipher.update(Buffer.from(envelope.ciphertext, "base64")),
+    decipher.final(),
+  ]).toString("utf8");
+}
+
 function statMtime(file: string): number | null {
   try {
     return fs.statSync(file).mtimeMs;
@@ -80,7 +149,8 @@ export function readCabinetEnvFile(): ParsedFile {
   }
   try {
     const raw = fs.readFileSync(file, "utf-8");
-    cache = { values: parseEnvText(raw), mtime };
+    const plaintext = isCloudRuntime() ? decryptCloudText(raw) : raw;
+    cache = { values: parseEnvText(plaintext), mtime };
   } catch {
     cache = { values: {}, mtime };
   }
@@ -98,6 +168,7 @@ function invalidateCache(): void {
  */
 export function loadCabinetEnv(): void {
   const { values } = readCabinetEnvFile();
+  if (isCloudRuntime()) return;
   for (const [key, value] of Object.entries(values)) {
     if (typeof process.env[key] === "string" && process.env[key] !== "") continue;
     process.env[key] = value;
@@ -146,6 +217,7 @@ function ensureGitignoreCovers(): void {
 
 function atomicWrite(file: string, contents: string): void {
   const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
   const tmp = path.join(dir, `.cabinet.env.${process.pid}.${Date.now()}.tmp`);
   fs.writeFileSync(tmp, contents, { encoding: "utf-8", mode: 0o600 });
   fs.renameSync(tmp, file);
@@ -158,8 +230,14 @@ function atomicWrite(file: string, contents: string): void {
 
 function persist(values: Record<string, string>): void {
   const file = cabinetEnvPath();
-  ensureGitignoreCovers();
-  atomicWrite(file, serialize(values));
+  if (isCloudRuntime() && Object.keys(values).length === 0) {
+    fs.rmSync(file, { force: true });
+    invalidateCache();
+    return;
+  }
+  if (!isCloudRuntime()) ensureGitignoreCovers();
+  const serialized = serialize(values);
+  atomicWrite(file, isCloudRuntime() ? encryptCloudText(serialized) : serialized);
   invalidateCache();
 }
 
@@ -177,7 +255,7 @@ export function upsertCabinetEnv(key: string, value: string): void {
   persist(next);
   // Live update for the current process (Cabinet's own `process.env.X`
   // reads pick this up immediately — no restart needed).
-  process.env[key] = value;
+  if (!isCloudRuntime()) process.env[key] = value;
 }
 
 export function removeCabinetEnv(key: string): void {
@@ -187,7 +265,7 @@ export function removeCabinetEnv(key: string): void {
   const next = { ...values };
   delete next[key];
   persist(next);
-  if (key in process.env) delete process.env[key];
+  if (!isCloudRuntime() && key in process.env) delete process.env[key];
 }
 
 export interface CabinetEnvSnapshotEntry {
