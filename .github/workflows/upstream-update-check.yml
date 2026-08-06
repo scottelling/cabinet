@@ -1,0 +1,96 @@
+name: Check official Cabinet updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 16 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: upstream-update-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Report updates without merging them
+    if: github.repository == 'scottelling/cabinet'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Scott's main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Compare with official Cabinet
+        id: compare
+        shell: bash
+        run: |
+          git remote add upstream https://github.com/cabinetai/cabinet.git
+          git fetch --quiet --no-tags upstream main
+
+          official_commit="$(git rev-parse upstream/main)"
+          common_commit="$(git merge-base HEAD upstream/main)"
+          short_commit="${official_commit:0:8}"
+
+          echo "official_commit=$official_commit" >> "$GITHUB_OUTPUT"
+          echo "common_commit=$common_commit" >> "$GITHUB_OUTPUT"
+          echo "short_commit=$short_commit" >> "$GITHUB_OUTPUT"
+
+          if git merge-base --is-ancestor "$official_commit" HEAD; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update the review reminder
+        if: steps.compare.outputs.available == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OFFICIAL_COMMIT: ${{ steps.compare.outputs.official_commit }}
+          COMMON_COMMIT: ${{ steps.compare.outputs.common_commit }}
+          SHORT_COMMIT: ${{ steps.compare.outputs.short_commit }}
+        shell: bash
+        run: |
+          title="Official Cabinet update available"
+          body_file="$RUNNER_TEMP/upstream-update.md"
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title --jq '.[] | select(.title == "Official Cabinet update available") | .number' | head -n 1)"
+
+          {
+            echo "Official Cabinet has changes that are not yet in Scott's customized main branch."
+            echo
+            echo "- Official commit: [\`$SHORT_COMMIT\`](https://github.com/cabinetai/cabinet/commit/$OFFICIAL_COMMIT)"
+            echo "- Last shared commit: \`$COMMON_COMMIT\`"
+            echo "- Checker run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "No official source code was merged, pushed, executed, or deployed by this check."
+            echo
+            echo "To prepare a protected review branch locally:"
+            echo
+            echo '```bash'
+            echo 'node scripts/upstream-update.mjs check'
+            echo 'node scripts/upstream-update.mjs prepare'
+            echo '```'
+            echo
+            echo "Then inspect the staged merge, preserve \`docs/CUSTOMIZATIONS.md\`, run the required checks, and open a draft pull request."
+          } > "$body_file"
+
+          if [ -n "$issue_number" ]; then
+            gh issue edit "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file "$body_file"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$body_file"
+          fi
+
+      - name: Close a stale reminder when Scott's main is current
+        if: steps.compare.outputs.available == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title --jq '.[] | select(.title == "Official Cabinet update available") | .number' | head -n 1)"
+          if [ -n "$issue_number" ]; then
+            gh issue close "$issue_number" --repo "$GITHUB_REPOSITORY" --comment "Scott's main branch now contains the official Cabinet commit checked by this workflow."
+          fi
