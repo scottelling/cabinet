@@ -174,3 +174,26 @@ Append meaningful work receipts. Preserve prior entries.
     page-level horizontal overflow. The Tool Builder fit inside a 375px phone.
 - Remaining work: publish a preview, verify the hosted result, merge, and check
   `cabinet.scottelling.com` in production.
+
+## 2026-08-06 — Animation Kit feedback follow-up prepared
+
+- Agent: Codex
+- Scope: Rebuilt the production feedback check-in as a solid Animation Kit
+  dialog after live proof exposed the last old ambient treatment.
+- Useful result:
+  - The dialog no longer blurs the product behind it or adds floating emoji,
+    glow, translucent controls, count-up movement, or a decorative star burst.
+  - Rating controls, close action, fields, and the GitHub action use the Kit's
+    full-size tactile controls and fit inside the phone viewport.
+  - Feedback submission behavior, triggering rules, translations, and stored
+    values are unchanged.
+- Verification:
+  - The focused feedback file passed lint and the complete TypeScript check.
+  - All 435 automated tests passed in the deterministic clean run. Two existing
+    command-adapter timing checks flickered under parallel load and passed in
+    isolation; neither touches the feedback interface.
+  - Repository lint completed with no errors; its existing warnings remain.
+  - The Next.js production build passed with the repository's existing dynamic
+    file-tracing warnings.
+- Remaining work: publish this production correction and verify the real
+  feedback window on phone and desktop.
