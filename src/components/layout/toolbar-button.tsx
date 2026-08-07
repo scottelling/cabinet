@@ -44,14 +44,14 @@ export function ToolbarButton({
   children,
 }: ToolbarButtonProps) {
   const cls = cn(
-    "inline-flex h-7 shrink-0 items-center rounded-md text-xs font-medium transition-colors cursor-pointer text-muted-foreground/70 hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:pointer-events-none",
-    iconOnly ? "w-7 justify-center" : "gap-1.5 px-2",
+    "inline-flex h-11 shrink-0 items-center rounded-[var(--radius-control,var(--radius-lg))] text-xs font-semibold transition-[color,background-color,transform] duration-[var(--dur-short,180ms)] ease-[var(--ease-standard,ease-out)] cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground active:translate-y-px disabled:opacity-40 disabled:pointer-events-none",
+    iconOnly ? "w-11 justify-center" : "gap-2 px-3",
     active && "bg-muted text-foreground",
     className
   );
   const inner = (
     <>
-      {Icon && <Icon className="h-3.5 w-3.5" />}
+      {Icon && <Icon className="size-[17px]" />}
       {!iconOnly && <span>{label}</span>}
       {children}
     </>

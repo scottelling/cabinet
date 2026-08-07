@@ -79,7 +79,7 @@ export function MobileBottomNav() {
       aria-label={t("chrome:nav.primaryAriaLabel")}
       className={cn(
         "md:hidden fixed bottom-0 inset-x-0 z-30",
-        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80",
+        "bg-card",
         "border-t border-border",
         "pb-[max(env(safe-area-inset-bottom),0.25rem)]"
       )}
@@ -97,7 +97,7 @@ export function MobileBottomNav() {
                 aria-label={label}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "w-full min-h-[56px] flex flex-col items-center justify-center gap-0.5",
+                  "w-full min-h-[64px] flex flex-col items-center justify-center gap-1",
                   "text-[10px] font-medium tracking-wide",
                   "transition-colors cursor-pointer",
                   isActive
@@ -107,7 +107,7 @@ export function MobileBottomNav() {
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5 shrink-0",
+                    "h-[18px] w-[18px] shrink-0",
                     isActive && "text-primary"
                   )}
                 />

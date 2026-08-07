@@ -33,16 +33,16 @@ export function TaskRailToggle({ className }: { className?: string }) {
             : t("taskRail:show")
       }
       className={cn(
-        "relative inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground",
+        "relative inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-control,var(--radius-lg))] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
         taskRailOpen && "bg-accent text-foreground",
         flash && "animate-pulse !text-emerald-600 dark:!text-emerald-400",
         className
       )}
     >
-      <PanelRight className="size-3.5" />
+      <PanelRight className="size-[17px]" />
       {runningCount > 0 && (
         <span
-          className="cabinet-task-heartbeat absolute -end-0.5 -top-0.5 inline-block size-2 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.7)]"
+          className="cabinet-task-heartbeat absolute end-1 top-1 inline-block size-2 rounded-full bg-emerald-500"
           aria-hidden="true"
         />
       )}

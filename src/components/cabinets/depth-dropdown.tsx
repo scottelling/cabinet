@@ -71,8 +71,8 @@ export function DepthDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          "inline-flex items-center gap-1 rounded font-medium text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground data-[popup-open]:bg-accent data-[popup-open]:text-foreground",
-          compact ? "px-1 py-0.5 text-[10px]" : "px-1.5 py-0.5 text-[11px]",
+          "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control,var(--radius-lg))] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[popup-open]:bg-accent data-[popup-open]:text-foreground",
+          compact ? "px-2 text-[10px]" : "px-3 text-[11px]",
           className
         )}
         title={t("cabinetsExtras:scopeTooltip", { label: currentLabel })}
@@ -98,7 +98,7 @@ export function DepthDropdown({
             <DropdownMenuItem
               key={opt.value}
               onClick={() => onChange(opt.value)}
-              className="flex items-start justify-between gap-3 py-1.5"
+              className="flex min-h-11 items-start justify-between gap-3 py-2"
             >
               <span className="flex items-start gap-2">
                 <span className="inline-flex w-6 shrink-0 justify-center pt-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">

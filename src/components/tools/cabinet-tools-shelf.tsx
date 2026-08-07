@@ -85,7 +85,7 @@ export function CabinetToolsShelf({
               key={manifest.id}
               type="button"
               onClick={() => onOpen(manifest.id)}
-              className="group min-h-[132px] rounded-2xl bg-muted/35 p-4 text-left shadow-[0_1px_3px_rgb(0_0_0/0.06)] transition-[transform,background-color,box-shadow] hover:-translate-y-0.5 hover:bg-muted/55 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="group min-h-[148px] rounded-[var(--radius-card,var(--radius-xl))] border border-border bg-card p-4 text-left shadow-[var(--shadow-inset,none)] transition-[transform,background-color,border-color] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="mb-5 flex size-10 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
                 <ToolIcon icon={manifest.icon} className="size-5" />
@@ -107,7 +107,7 @@ export function CabinetToolsShelf({
             type="button"
             disabled={changingToolId === manifest.id}
             onClick={() => void install(manifest).catch(() => {})}
-            className="min-h-[148px] rounded-2xl bg-primary/7 p-4 text-left shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_24%,transparent)] transition-colors hover:bg-primary/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            className="min-h-[148px] rounded-[var(--radius-card,var(--radius-xl))] border border-primary/30 bg-card p-4 text-left shadow-[var(--shadow-inset,none)] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           >
             <span className="mb-4 flex items-center justify-between gap-2">
               <span className="flex size-10 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
@@ -144,7 +144,7 @@ export function CabinetToolsShelf({
             type="button"
             disabled={changingToolId === manifest.id}
             onClick={() => void install(manifest.id).catch(() => {})}
-            className="min-h-[132px] rounded-2xl bg-background/65 p-4 text-left shadow-[inset_0_0_0_1px_rgb(0_0_0/0.08)] transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.1)]"
+            className="min-h-[148px] rounded-[var(--radius-card,var(--radius-xl))] border border-border bg-card p-4 text-left shadow-[var(--shadow-inset,none)] transition-colors hover:border-primary/30 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           >
             <span className="mb-5 flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
               {changingToolId === manifest.id ? (

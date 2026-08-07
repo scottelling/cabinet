@@ -5,7 +5,7 @@ import { useTheme } from "@/components/theme-provider";
 import {
   THEMES,
   applyTheme,
-  getStoredThemeName,
+  resolveInitialThemeName,
   storeThemeName,
 } from "@/lib/themes";
 
@@ -37,17 +37,14 @@ export function ThemeInitializer() {
       );
     }
 
-    // Restore or default to Paper/Cabinet theme. applyTheme() loads only the
+    // Restore or migrate once to the current Kit. applyTheme() loads only the
     // Google Font families that theme actually uses — see themes.ts.
-    const stored = getStoredThemeName();
-    const themeName = stored || "paper";
+    const themeName = resolveInitialThemeName();
     const themeDef = THEMES.find((t) => t.name === themeName);
     if (themeDef) {
       applyTheme(themeDef);
       setTheme(themeDef.type);
-      if (!stored) {
-        storeThemeName(themeName);
-      }
+      storeThemeName(themeName);
     }
 
     return () => unsubscribeFullscreen?.();

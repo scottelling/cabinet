@@ -5,7 +5,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useAppStore } from "@/stores/app-store";
 import { useRoomsStore } from "@/stores/rooms-store";
 import { ROOT_CABINET_PATH } from "@/lib/cabinets/paths";
-import { THEMES, applyTheme, getStoredThemeName } from "@/lib/themes";
+import { DEFAULT_THEME_NAME, THEMES, applyTheme, getStoredThemeName } from "@/lib/themes";
 
 /**
  * Applies the active room's theme whenever you switch rooms. Each room can pin
@@ -34,7 +34,7 @@ export function RoomThemeSync() {
         ? ROOT_CABINET_PATH
         : cabinetPath.split("/")[0];
     const room = rooms.find((r) => r.path === top);
-    const themeName = room?.theme || getStoredThemeName() || "paper";
+    const themeName = room?.theme || getStoredThemeName() || DEFAULT_THEME_NAME;
     const def = THEMES.find((t) => t.name === themeName);
     if (def) {
       applyTheme(def);

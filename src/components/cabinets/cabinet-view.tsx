@@ -208,7 +208,7 @@ export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
       {/* ── Header row — a desk toolbar (transparent, floats above the sheet),
           matching the agents/tasks surfaces rather than a bordered bar. ── */}
         <header
-          className="@container flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 transition-[padding] duration-200"
+          className="@container flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 transition-[padding] duration-200"
           style={{ paddingInlineStart: `calc(1rem + var(--sidebar-toggle-offset, 0px))` }}
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -229,7 +229,7 @@ export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
             <CountPill label="heartbeats" value={heartbeatCount} />
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="scrollbar-none -mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 overflow-x-auto px-1 pb-0.5 md:mx-0 md:ml-auto md:w-auto md:overflow-visible md:px-0 md:pb-0">
             <DepthDropdown
               mode={cabinetVisibilityMode}
               onChange={(mode) => setCabinetVisibilityMode(cabinetPath, mode)}
@@ -240,7 +240,7 @@ export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
               onClick={() => setOrgChartOpen(true)}
               disabled={!overview || agentCount === 0}
               title="Org chart"
-              className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[var(--radius-control,var(--radius-lg))] px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               <Network className="size-3.5" />
               <span className="@max-[780px]:hidden">Org chart</span>
@@ -260,7 +260,7 @@ export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
         {/* ── Body sheet — floats on the desk like agents/tasks ── */}
         <ContentSheet>
           <ScrollArea className="min-h-0 flex-1">
-            <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+            <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-6 sm:py-8">
             {error ? (
               <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">
                 {error}

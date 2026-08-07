@@ -26,7 +26,100 @@ export interface ThemeDefinition {
   vars: Record<string, string>;
 }
 
+/**
+ * The active product-wide visual system. Keeping this as a named theme makes
+ * the Animation Kit swap reversible from Cabinet's existing appearance picker
+ * without coupling any product behavior to the new styling.
+ */
+export const DEFAULT_THEME_NAME = "animation";
+export const UI_SYSTEM_VERSION = "animation-v1";
+const UI_SYSTEM_VERSION_KEY = "cabinet-ui-system-version";
+
+/**
+ * Move existing browsers onto the current visual system exactly once. After
+ * that first migration, the user's theme choice remains authoritative.
+ */
+export function resolveInitialThemeName(): string {
+  if (typeof window === "undefined") return DEFAULT_THEME_NAME;
+  const currentVersion = localStorage.getItem(UI_SYSTEM_VERSION_KEY);
+  if (currentVersion !== UI_SYSTEM_VERSION) {
+    localStorage.setItem(UI_SYSTEM_VERSION_KEY, UI_SYSTEM_VERSION);
+    localStorage.setItem("cabinet-theme", DEFAULT_THEME_NAME);
+    return DEFAULT_THEME_NAME;
+  }
+  return localStorage.getItem("cabinet-theme") || DEFAULT_THEME_NAME;
+}
+
 export const THEMES: ThemeDefinition[] = [
+  // ─── ANIMATION KIT (product default) ───
+  // Source authority: kit/lib/animation-tokens.json. These values are copied
+  // verbatim so Cabinet consumes the real Kit rather than a local imitation.
+  {
+    name: "animation",
+    label: "Animation Kit",
+    type: "dark",
+    font: "var(--font-animation-ui), 'Outfit', ui-sans-serif, sans-serif",
+    headingFont: "var(--font-animation-ui), 'Outfit', ui-sans-serif, sans-serif",
+    accent: "#b77af4",
+    vars: {
+      "--background": "oklch(0.15683 0.01057 285.12)",
+      "--foreground": "oklch(0.94481 0.00802 286.25)",
+      "--card": "oklch(0.20452 0.01782 284.72)",
+      "--card-foreground": "oklch(0.94481 0.00802 286.25)",
+      "--popover": "oklch(0.24539 0.02460 284.44)",
+      "--popover-foreground": "oklch(0.94481 0.00802 286.25)",
+      "--primary": "oklch(0.71998 0.17231 303.07)",
+      "--primary-foreground": "oklch(0.15683 0.01057 285.12)",
+      "--secondary": "oklch(0.24539 0.02460 284.44)",
+      "--secondary-foreground": "oklch(1 0 0 / 0.72)",
+      "--muted": "oklch(0.17650 0.01438 284.83)",
+      "--muted-foreground": "oklch(1 0 0 / 0.56)",
+      "--accent": "oklch(0.24539 0.02460 284.44)",
+      "--accent-foreground": "oklch(0.94481 0.00802 286.25)",
+      "--destructive": "oklch(0.71161 0.18122 22.84)",
+      "--destructive-foreground": "oklch(0.15683 0.01057 285.12)",
+      "--positive": "oklch(0.86280 0.15184 159.40)",
+      "--positive-foreground": "oklch(0.15683 0.01057 285.12)",
+      "--border": "oklch(1 0 0 / 0.07)",
+      "--input": "oklch(0.24539 0.02460 284.44)",
+      "--ring": "oklch(0.71998 0.17231 303.07)",
+      "--overlay": "oklch(0.15683 0.01057 285.12)",
+      "--plane-1": "oklch(0.17650 0.01438 284.83)",
+      "--plane-2": "oklch(0.20452 0.01782 284.72)",
+      "--plane-3": "oklch(0.24539 0.02460 284.44)",
+      "--plane-pressed": "oklch(0.16788 0.01665 284.46)",
+      "--ink-faint": "oklch(1 0 0 / 0.36)",
+      "--chart-1": "oklch(0.71998 0.17231 303.07)",
+      "--chart-2": "oklch(0.75854 0.12380 260.18)",
+      "--chart-3": "oklch(0.88878 0.16396 93.40)",
+      "--chart-4": "oklch(0.86280 0.15184 159.40)",
+      "--chart-5": "oklch(0.71161 0.18122 22.84)",
+      "--sidebar": "oklch(0.17650 0.01438 284.83)",
+      "--sidebar-foreground": "oklch(0.94481 0.00802 286.25)",
+      "--sidebar-primary": "oklch(0.71998 0.17231 303.07)",
+      "--sidebar-primary-foreground": "oklch(0.15683 0.01057 285.12)",
+      "--sidebar-accent": "oklch(0.24539 0.02460 284.44)",
+      "--sidebar-accent-foreground": "oklch(0.94481 0.00802 286.25)",
+      "--sidebar-border": "oklch(1 0 0 / 0.07)",
+      "--sidebar-ring": "oklch(0.71998 0.17231 303.07)",
+      "--animation-info": "oklch(0.75854 0.12380 260.18)",
+      "--animation-warning": "oklch(0.88878 0.16396 93.40)",
+      "--animation-success": "oklch(0.86280 0.15184 159.40)",
+      "--animation-danger": "oklch(0.71161 0.18122 22.84)",
+      "--radius": "0.625rem",
+      "--radius-control": "0.5625rem",
+      "--radius-card": "0.75rem",
+      "--radius-sheet": "1rem",
+      "--dur-micro": "120ms",
+      "--dur-short": "180ms",
+      "--dur-long": "420ms",
+      "--ease-standard": "cubic-bezier(0.23, 1, 0.32, 1)",
+      "--shadow-control": "inset 0 0 0 1px oklch(1 0 0 / 0.07)",
+      "--shadow-panel": "0 18px 46px -18px oklch(0 0 0 / 0.90), inset 0 0 0 1px oklch(1 0 0 / 0.07)",
+      "--shadow-inset": "inset 0 1px 0 oklch(1 0 0 / 0.07)",
+    },
+  },
+
   // ─── CLAUDE THEME (signature) ───
   {
     name: "claude",
@@ -786,16 +879,19 @@ function loadThemeFonts(theme: ThemeDefinition | null) {
 export function applyTheme(theme: ThemeDefinition | null) {
   const root = document.documentElement;
 
+  // Remove the complete variable union before applying the next theme. Some
+  // kits own additional semantic roles, and leaving those inline would make a
+  // later theme choice a partial, visually inconsistent rollback.
+  const themeVariableNames = new Set(
+    THEMES.flatMap((candidate) => Object.keys(candidate.vars))
+  );
+  themeVariableNames.forEach((key) => root.style.removeProperty(key));
+
   if (!theme) {
     // Reset to default (remove custom vars, let .dark/:root handle it)
     root.removeAttribute("data-custom-theme");
     root.style.removeProperty("--font-theme");
     root.style.removeProperty("--font-heading-theme");
-    if (THEMES[0]) {
-      Object.keys(THEMES[0].vars).forEach((key) => {
-        root.style.removeProperty(key);
-      });
-    }
     loadThemeFonts(null);
     return;
   }

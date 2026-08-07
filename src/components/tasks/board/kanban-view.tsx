@@ -460,7 +460,7 @@ export function KanbanView({
     <div
       ref={scrollRef}
       onScroll={updateScrollEdges}
-      className="flex min-h-0 w-full min-w-0 flex-1 gap-3 overflow-x-auto overflow-y-hidden p-4 snap-x snap-mandatory md:snap-none rtl:flex-row-reverse"
+      className="scrollbar-thin flex min-h-0 w-full min-w-0 flex-1 gap-3 overflow-x-auto overflow-y-hidden p-4 snap-x snap-mandatory md:snap-none rtl:flex-row-reverse"
     >
       {LANES.map((lane) => {
         const allItems = byLane[lane.key];

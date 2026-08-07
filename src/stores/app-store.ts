@@ -385,7 +385,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Audit #131: keep the task side panel visible across navigation so the
     // user can launch a task and keep working while it runs. The panel is
     // dismissed explicitly via its X button or replaced by another launch.
-    set({ section, returnTo: null });
+    set({
+      section,
+      returnTo: null,
+      // The sidebar is a modal drawer on phones. Navigating from it must also
+      // dismiss it, otherwise it keeps covering the destination screen.
+      sidebarCollapsed:
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 767px)").matches
+          ? true
+          : get().sidebarCollapsed,
+    });
   },
 
   pushSection: (next, from) => {
@@ -398,7 +408,15 @@ export const useAppStore = create<AppState>((set, get) => ({
         keepalive: true,
       }).catch(() => {});
     }
-    set({ section: next, returnTo: from });
+    set({
+      section: next,
+      returnTo: from,
+      sidebarCollapsed:
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 767px)").matches
+          ? true
+          : get().sidebarCollapsed,
+    });
   },
 
   popReturnTo: () => {
@@ -526,7 +544,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   setTerminalCwd: (cwd) => set({ terminalCwd: cwd }),
 
   setSidebarCollapsed: (collapsed) => {
-    try { window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(collapsed)); } catch { /* ignore */ }
+    try {
+      // Phone uses the sidebar as a temporary drawer. Do not let opening or
+      // closing that drawer overwrite the user's persistent desktop rail.
+      if (!window.matchMedia("(max-width: 767px)").matches) {
+        window.localStorage.setItem(
+          SIDEBAR_COLLAPSED_STORAGE_KEY,
+          String(collapsed)
+        );
+      }
+    } catch {
+      /* ignore */
+    }
     set({ sidebarCollapsed: collapsed });
   },
   setSidebarDrawer: (drawer) => {

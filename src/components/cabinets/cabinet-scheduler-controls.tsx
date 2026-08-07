@@ -101,7 +101,7 @@ export function CabinetSchedulerControls({
               ? `Stop all ${activeOwn.length} active agent(s). Pauses their heartbeats and cron jobs. Only this cabinet, not sub-cabinets.`
               : `Activate all ${ownAgents.length} agent(s). Starts their heartbeats and cron jobs on schedule. Only this cabinet, not sub-cabinets.`
           }
-          className={cn(splitBase, "gap-2 rounded-s-md border-e-0 px-3 py-1.5 text-sm font-medium")}
+          className={cn(splitBase, "min-h-11 gap-2 rounded-s-[var(--radius-control,var(--radius-lg))] border-e-0 px-3 text-sm font-semibold")}
         >
           {busy ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -118,7 +118,8 @@ export function CabinetSchedulerControls({
           type="button"
           disabled={busy}
           onClick={() => setMenuOpen((o) => !o)}
-          className={cn(splitBase, "rounded-e-md border-s border-border/60 px-2 py-1.5")}
+          aria-label="Open scheduler actions"
+          className={cn(splitBase, "min-h-11 min-w-11 justify-center rounded-e-[var(--radius-control,var(--radius-lg))] border-s border-border/60 px-3")}
         >
           <ChevronDown className="h-3.5 w-3.5" />
         </button>
@@ -133,7 +134,7 @@ export function CabinetSchedulerControls({
                 type="button"
                 onClick={() => void schedulerAction("start-all")}
                 disabled={busy}
-                className="flex w-full items-start gap-2.5 px-3 py-2 text-left transition-colors hover:bg-muted/40"
+                className="flex min-h-11 w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
               >
                 <Play className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
                 <div>
@@ -147,7 +148,7 @@ export function CabinetSchedulerControls({
                 type="button"
                 onClick={() => void schedulerAction("stop-all")}
                 disabled={busy}
-                className="flex w-full items-start gap-2.5 px-3 py-2 text-left transition-colors hover:bg-muted/40"
+                className="flex min-h-11 w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
               >
                 <Square className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <div>

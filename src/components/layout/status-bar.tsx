@@ -1030,7 +1030,7 @@ export function StatusBar() {
             title={t("status:help.starsTitle", {
               count: formatGithubStars(displayStars),
             })}
-            className="relative inline-flex items-center gap-1 rounded-full border border-border bg-muted/55 px-2.5 py-1 text-muted-foreground transition-all hover:-translate-y-px hover:border-foreground/15 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 @max-[820px]:hidden"
+            className="relative inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-control,var(--radius-lg))] border border-border bg-muted px-3 text-muted-foreground transition-all hover:-translate-y-px hover:border-primary/30 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 @max-[820px]:hidden"
           >
             {starsExploding && <StarExplosion />}
             <Star className="h-3 w-3 fill-current text-amber-500/75" />

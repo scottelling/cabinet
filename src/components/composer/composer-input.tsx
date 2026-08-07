@@ -193,9 +193,10 @@ export function ComposerInput({
   return (
     <div className={cn("relative flex flex-col", className)}>
       <div
+        data-slot={variant === "card" ? "composer-card" : "composer-inline"}
         className={cn(
           "relative flex flex-col",
-          variant === "card" && "rounded-2xl border border-foreground/10 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.05)]",
+          variant === "card" && "rounded-[var(--radius-card,var(--radius-xl))] border border-card-edge bg-card shadow-[var(--shadow-panel,0_1px_3px_rgb(0_0_0/0.05))]",
           focusTint && "transition-all",
           focusTint && cardFocused && "shadow-sm",
           isDragging && "ring-2 ring-primary/60 ring-offset-0"
@@ -264,7 +265,7 @@ export function ComposerInput({
             disabled={isDisabled}
             style={{ minHeight, maxHeight }}
             className={cn(
-              "w-full resize-none overflow-y-auto bg-transparent px-4 pt-4 pb-2 text-[13px] text-foreground caret-foreground outline-none placeholder:text-muted-foreground/60 disabled:opacity-50 disabled:cursor-not-allowed",
+              "w-full resize-none overflow-y-auto bg-transparent px-4 pt-4 pb-3 text-sm leading-6 text-foreground caret-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed",
               topRightOverlay && "pe-28",
               textareaClassName
             )}
@@ -311,7 +312,7 @@ export function ComposerInput({
             {secondaryAction && (
               <Button
                 variant="outline"
-                className="h-8 gap-2 text-xs"
+                className="gap-2 text-xs"
                 onClick={secondaryAction.onClick}
                 disabled={isDisabled || !input.trim() || secondaryAction.disabled || isUploading}
               >
@@ -328,7 +329,7 @@ export function ComposerInput({
               className={!isDisabled && !input.trim() ? "cursor-text" : undefined}
             >
               <Button
-                className="h-8 gap-2 text-xs"
+                className="gap-2 text-xs"
                 onClick={() => void submit()}
                 disabled={sendDisabled}
                 title={isUploading ? "Uploading attachments…" : !input.trim() ? "Type a prompt to send" : undefined}

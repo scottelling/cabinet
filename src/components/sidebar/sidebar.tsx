@@ -134,7 +134,10 @@ export function Sidebar() {
   // user had before crossing the breakpoint instead of leaving `true`
   // persisted forever (e.g. a briefly-narrowed desktop window shouldn't
   // permanently collapse the sidebar).
-  const wasMobile = useRef(isMobile);
+  // Start from desktop semantics so the first phone render also runs the
+  // close-drawer branch. Initializing this from `isMobile` left the drawer
+  // open whenever a previous session had stored an expanded desktop rail.
+  const wasMobile = useRef(false);
   const preMobileCollapsed = useRef(collapsed);
   useEffect(() => {
     if (isMobile && !wasMobile.current) {

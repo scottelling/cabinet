@@ -107,7 +107,7 @@ export function ThemePicker() {
     ? createPortal(
         <div
           ref={menuRef}
-          className="fixed w-56 rounded-lg border border-border bg-popover shadow-2xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[80vh] overflow-y-auto"
+          className="fixed w-64 rounded-[var(--radius-card,var(--radius-xl))] border border-border bg-popover shadow-[var(--shadow-panel)] p-2 animate-in fade-in slide-in-from-top-2 duration-150 max-h-[80vh] overflow-y-auto"
           style={{
             top: menuPos.top,
             ...(dir === "rtl"
@@ -123,7 +123,7 @@ export function ThemePicker() {
           <button
             onClick={() => selectDefault("light")}
             className={cn(
-              "flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-[12px] transition-colors cursor-pointer",
+              "flex min-h-11 items-center gap-3 w-full px-3 py-2 rounded-[var(--radius-control,var(--radius-lg))] text-[12px] transition-colors cursor-pointer",
               !activeCustomTheme && theme === "light"
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent/50"
@@ -138,7 +138,7 @@ export function ThemePicker() {
           <button
             onClick={() => selectDefault("dark")}
             className={cn(
-              "flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-[12px] transition-colors cursor-pointer",
+              "flex min-h-11 items-center gap-3 w-full px-3 py-2 rounded-[var(--radius-control,var(--radius-lg))] text-[12px] transition-colors cursor-pointer",
               !activeCustomTheme && theme === "dark"
                 ? "bg-accent text-accent-foreground"
                 : "hover:bg-accent/50"
@@ -162,7 +162,7 @@ export function ThemePicker() {
               key={t.name}
               onClick={() => selectTheme(t)}
               className={cn(
-                "flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-[12px] transition-colors cursor-pointer",
+                "flex min-h-11 items-center gap-3 w-full px-3 py-2 rounded-[var(--radius-control,var(--radius-lg))] text-[12px] transition-colors cursor-pointer",
                 activeCustomTheme === t.name
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
@@ -195,7 +195,7 @@ export function ThemePicker() {
               key={t.name}
               onClick={() => selectTheme(t)}
               className={cn(
-                "flex items-center gap-3 w-full px-2 py-1.5 rounded-md text-[12px] transition-colors cursor-pointer",
+                "flex min-h-11 items-center gap-3 w-full px-3 py-2 rounded-[var(--radius-control,var(--radius-lg))] text-[12px] transition-colors cursor-pointer",
                 activeCustomTheme === t.name
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-accent/50"
@@ -234,7 +234,7 @@ export function ThemePicker() {
         ref={buttonRef}
         variant="ghost"
         size="icon"
-        className="h-7 w-7"
+        className="size-11"
         onClick={handleClick}
       >
         {activeCustomTheme ? (

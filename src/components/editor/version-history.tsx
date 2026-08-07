@@ -34,9 +34,10 @@ export function VersionHistory({ path }: { path?: string }) {
     <Button
       variant="ghost"
       size="icon"
-      className="h-7 w-7 text-muted-foreground/70 hover:text-foreground"
+      className="size-11 text-muted-foreground hover:text-foreground"
       onClick={() => openFileHistory(targetPath)}
       title={t("versionHistory:title")}
+      aria-label={t("versionHistory:title")}
     >
       <History className="h-3.5 w-3.5" />
     </Button>
@@ -89,8 +90,9 @@ export function FileHistoryPanel() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7"
+          className="size-11"
           onClick={() => setPath(null)}
+          aria-label={t("tinyExtras:close")}
         >
           <X className="h-4 w-4" />
         </Button>

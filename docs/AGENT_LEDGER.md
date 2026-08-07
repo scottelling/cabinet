@@ -142,3 +142,35 @@ Append meaningful work receipts. Preserve prior entries.
     during verification.
 - Open loops:
   - None for this release.
+
+## 2026-08-06 — Animation Kit swap prepared
+
+- Agent: Codex
+- Scope: Replaced Cabinet's shared visual foundation with the published
+  Animation Kit while preserving Cabinet's product behavior, data, routes,
+  agents, tasks, Tools, providers, and storage boundaries.
+- Branch: `agent/animation-kit-swap`, based on production `d423eb18`.
+- Useful result:
+  - Existing browsers migrate to Animation Kit once; later appearance choices
+    remain authoritative.
+  - The previous themes remain available as the visual undo path, and the
+    Animation Kit card in Settings restores the new system.
+  - Shared buttons, inputs, selects, dialogs, content sheets, composer,
+    toolbars, Cabinet home, Tool shelf, task rail, editor overflow controls,
+    status actions, and phone navigation now use the Kit's tactile language.
+  - Phone navigation closes the sidebar drawer after selection and no longer
+    lets phone drawer state overwrite the saved desktop rail.
+- Verification:
+  - All 435 automated tests passed on the clean rerun. One provider test
+    intermittently failed during a parallel first run and passed both in
+    isolation and in the clean complete rerun.
+  - Repository lint completed with no errors; its existing warnings remain.
+  - TypeScript and the Next.js production build passed. The build reported the
+    repository's existing dynamic-file-tracing warnings.
+  - Browser proof covered Cabinet home, room home, Agents, Tasks, Settings,
+    theme switching and restoration, task creation, and the visual Tool
+    Builder with no console errors.
+  - Width checks at 320, 375, 414, 768, 1280, and 1440 CSS pixels found no
+    page-level horizontal overflow. The Tool Builder fit inside a 375px phone.
+- Remaining work: publish a preview, verify the hosted result, merge, and check
+  `cabinet.scottelling.com` in production.

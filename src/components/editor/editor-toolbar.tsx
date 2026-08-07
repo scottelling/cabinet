@@ -426,7 +426,7 @@ export function EditorToolbar({ editor, sourceMode, onToggleSource, wideMode, on
               aria-label={t("editor:toolbar.scrollLeft")}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => scrollBy(-1)}
-              className="absolute left-0 rtl:left-auto rtl:right-0 top-0 bottom-0 w-6 z-10 flex items-center justify-start rtl:justify-end ps-0.5 bg-gradient-to-r rtl:bg-gradient-to-l from-[var(--gutter)] via-[var(--gutter)]/80 to-transparent text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute left-0 rtl:left-auto rtl:right-0 top-0 bottom-0 w-9 z-10 flex items-center justify-start rtl:justify-end ps-1 bg-[var(--gutter)] border-e border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               <DirIcon ltr={ChevronLeft} rtl={ChevronRight} className="h-4 w-4" />
             </button>
@@ -437,7 +437,7 @@ export function EditorToolbar({ editor, sourceMode, onToggleSource, wideMode, on
               aria-label={t("editor:toolbar.scrollRight")}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => scrollBy(1)}
-              className="absolute right-0 rtl:right-auto rtl:left-0 top-0 bottom-0 w-6 z-10 flex items-center justify-end rtl:justify-start pe-0.5 bg-gradient-to-l rtl:bg-gradient-to-r from-[var(--gutter)] via-[var(--gutter)]/80 to-transparent text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-0 rtl:right-auto rtl:left-0 top-0 bottom-0 w-9 z-10 flex items-center justify-end rtl:justify-start pe-1 bg-[var(--gutter)] border-s border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               <DirIcon ltr={ChevronRight} rtl={ChevronLeft} className="h-4 w-4" />
             </button>
