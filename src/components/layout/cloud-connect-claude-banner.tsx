@@ -57,7 +57,7 @@ export function CloudConnectClaudeBanner() {
   return (
     <div
       role="status"
-      className="ms-2.5 mt-2 mb-1.5 flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/[0.06] px-3.5 py-2.5 text-[12px] text-foreground shadow-sm"
+      className="mx-2.5 mt-2 mb-1.5 flex flex-col items-stretch gap-3 rounded-[var(--radius-card,var(--radius-xl))] border border-border bg-card px-4 py-3 text-[12px] text-foreground shadow-[var(--shadow-inset,none)] sm:flex-row sm:items-center"
     >
       <div className="flex-1 min-w-0">
         <span className="font-medium">Add an AI provider key to power your agents</span>
@@ -73,7 +73,7 @@ export function CloudConnectClaudeBanner() {
             slug: "api-keys",
           })
         }
-        className="-my-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-control,var(--radius-lg))] bg-primary px-4 text-[12px] font-semibold text-primary-foreground transition-colors hover:bg-primary/85 active:translate-y-px"
       >
         Add API key
         <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />

@@ -18,6 +18,12 @@ This file lists behavior that must survive official Cabinet updates. Update it w
   metrics; lets people build those tools through a visual guided interface;
   and provides approved automations, audit history, disable/enable,
   recoverable removal, and rollback controls.
+- The shared Animation Kit as Cabinet's default visual system: exact published
+  colors, Outfit interface type, JetBrains Mono technical type, solid tactile
+  surfaces, purposeful motion, and full-size controls. The existing Appearance
+  picker is the reversible visual rollback and must remain usable.
+- Phone navigation closes the sidebar drawer after choosing a destination and
+  never overwrites the saved desktop sidebar preference.
 
 ## In Development Branches
 
@@ -34,6 +40,8 @@ Before accepting an official update, verify:
 3. Cabinet workspace content survives a fresh deployment and can still be read and written.
 4. Agents and Tasks remain in the active room on mobile, with usable touch targets.
 5. The Vercel build, automated tests, and preview all pass before production merge.
+6. Animation Kit remains the one-time default for existing browsers, older
+   themes can still be selected, and choosing Animation Kit restores it.
 
 ## Conflict Rule
 

@@ -39,6 +39,8 @@
      --border can't provide, so their containers stay readable (#090). */
   --color-card-edge: var(--card-edge);
   --color-destructive: var(--destructive);
+  --color-positive: var(--positive);
+  --color-positive-foreground: var(--positive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -211,6 +213,124 @@
    --background in :root / .dark, so they all float their content too. */
 html[data-custom-theme="paper"] {
   --gutter: oklch(0.925 0.026 79);
+}
+
+/* ─── Animation Kit visual system ────────────────────────────────────────
+   Source authority: kit/lib/animation-tokens.json. This first-paint copy
+   matches the theme definition in themes.ts so the live swap never flashes
+   Cabinet's previous appearance while React is starting. */
+html[data-custom-theme="animation"] {
+  color-scheme: dark;
+  --background: oklch(0.15683 0.01057 285.12);
+  --foreground: oklch(0.94481 0.00802 286.25);
+  --card: oklch(0.20452 0.01782 284.72);
+  --card-foreground: oklch(0.94481 0.00802 286.25);
+  --popover: oklch(0.24539 0.02460 284.44);
+  --popover-foreground: oklch(0.94481 0.00802 286.25);
+  --primary: oklch(0.71998 0.17231 303.07);
+  --primary-foreground: oklch(0.15683 0.01057 285.12);
+  --secondary: oklch(0.24539 0.02460 284.44);
+  --secondary-foreground: oklch(1 0 0 / 0.72);
+  --muted: oklch(0.17650 0.01438 284.83);
+  --muted-foreground: oklch(1 0 0 / 0.56);
+  --accent: oklch(0.24539 0.02460 284.44);
+  --accent-foreground: oklch(0.94481 0.00802 286.25);
+  --destructive: oklch(0.71161 0.18122 22.84);
+  --destructive-foreground: oklch(0.15683 0.01057 285.12);
+  --positive: oklch(0.86280 0.15184 159.40);
+  --positive-foreground: oklch(0.15683 0.01057 285.12);
+  --border: oklch(1 0 0 / 0.07);
+  --input: oklch(0.24539 0.02460 284.44);
+  --ring: oklch(0.71998 0.17231 303.07);
+  --overlay: oklch(0.15683 0.01057 285.12);
+  --plane-1: oklch(0.17650 0.01438 284.83);
+  --plane-2: oklch(0.20452 0.01782 284.72);
+  --plane-3: oklch(0.24539 0.02460 284.44);
+  --plane-pressed: oklch(0.16788 0.01665 284.46);
+  --ink-faint: oklch(1 0 0 / 0.36);
+  --chart-1: oklch(0.71998 0.17231 303.07);
+  --chart-2: oklch(0.75854 0.12380 260.18);
+  --chart-3: oklch(0.88878 0.16396 93.40);
+  --chart-4: oklch(0.86280 0.15184 159.40);
+  --chart-5: oklch(0.71161 0.18122 22.84);
+  --sidebar: oklch(0.17650 0.01438 284.83);
+  --sidebar-foreground: oklch(0.94481 0.00802 286.25);
+  --sidebar-primary: oklch(0.71998 0.17231 303.07);
+  --sidebar-primary-foreground: oklch(0.15683 0.01057 285.12);
+  --sidebar-accent: oklch(0.24539 0.02460 284.44);
+  --sidebar-accent-foreground: oklch(0.94481 0.00802 286.25);
+  --sidebar-border: oklch(1 0 0 / 0.07);
+  --sidebar-ring: oklch(0.71998 0.17231 303.07);
+  --radius: 0.625rem;
+  --radius-control: 0.5625rem;
+  --radius-card: 0.75rem;
+  --radius-sheet: 1rem;
+  --dur-micro: 120ms;
+  --dur-short: 180ms;
+  --dur-long: 420ms;
+  --ease-standard: cubic-bezier(0.23, 1, 0.32, 1);
+  --shadow-control: inset 0 0 0 1px oklch(1 0 0 / 0.07);
+  --shadow-panel: 0 18px 46px -18px oklch(0 0 0 / 0.90), inset 0 0 0 1px oklch(1 0 0 / 0.07);
+  --shadow-inset: inset 0 1px 0 oklch(1 0 0 / 0.07);
+  --gutter: var(--background);
+  --sheet-radius: var(--radius-sheet);
+  --sheet-shadow: var(--shadow-panel);
+  --border-soft: var(--border);
+  --sidebar-border-soft: var(--sidebar-border);
+  --card-edge: var(--border);
+}
+
+html[data-custom-theme="animation"],
+html[data-custom-theme="animation"] body {
+  font-family: var(--font-animation-ui), Outfit, ui-sans-serif, sans-serif !important;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -0.008em;
+}
+
+html[data-custom-theme="animation"] :where(h1, h2, h3, h4) {
+  letter-spacing: -0.025em;
+}
+
+html[data-custom-theme="animation"] [data-slot="content-sheet"] {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+}
+
+html[data-custom-theme="animation"] [data-slot="composer-card"],
+html[data-custom-theme="animation"] [data-slot="dialog-content"],
+html[data-custom-theme="animation"] [data-slot="select-content"] {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-panel);
+}
+
+html[data-custom-theme="animation"] :where([data-slot="input"], [data-slot="select-trigger"]) {
+  background: var(--input);
+  border-color: var(--border);
+  box-shadow: var(--shadow-control);
+}
+
+html[data-custom-theme="animation"] :where(button, a, input, textarea, [role="button"]) {
+  transition-duration: var(--dur-short);
+  transition-timing-function: var(--ease-standard);
+}
+
+html[data-custom-theme="animation"] :where(button, [role="button"], [role="menuitem"], [role="option"]):not([role="switch"]):not([role="checkbox"]):not([role="radio"]) {
+  min-height: 44px;
+}
+
+html[data-custom-theme="animation"] :where(button[aria-label], [role="button"][aria-label]) {
+  min-width: 44px;
+}
+
+/* Touch targets are part of the Kit contract. Compact desktop affordances may
+   stay dense, but every phone action gets a comfortable physical target. */
+@media (max-width: 767px) {
+  :where(button, [role="button"], [role="menuitem"], [role="option"]):not([role="switch"]):not([role="checkbox"]):not([role="radio"]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Custom theme font overrides — outside @layer so they beat Tailwind utilities */

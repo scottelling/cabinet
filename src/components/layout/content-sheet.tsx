@@ -23,6 +23,7 @@ export function ContentSheet({
   const isMobile = useIsMobile();
   return (
     <div
+      data-slot="content-sheet"
       className={cn(
         "flex-1 flex flex-col overflow-hidden bg-background min-h-0",
         className

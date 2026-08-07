@@ -1,10 +1,46 @@
-# PRD — Cabinet Visual Design (Manila Arc)
+# PRD — Cabinet Visual Design (Animation Kit)
 
-**Status:** Shipped on `feat/manila-arc-borderless-ui`; this is the single source of truth for Cabinet's visual system.
-**Author:** hilash · **Last updated:** 2026-07-04
-**Driver:** Make Cabinet feel like a native desktop app, not a website — a borderless, content-first surface where bright "sheets" of content float on a manila **desk**, the chrome recedes into the background, and every file type reads as one coherent system.
+**Status:** Current product-wide visual authority on `agent/animation-kit-swap`.
+**Author:** hilash + Codex · **Last updated:** 2026-08-06
+**Driver:** Apply the shared Animation Kit to Cabinet without replacing Cabinet's pages, workflows, data, Tools, or specialist layouts.
 
-> **Supersedes** the "removed the sheet-like rounded container" direction noted in `CABINET_UI_WORK_SUMMARY.md` (2026-04-12). That was an intermediate flat phase; the floating-sheet model below is the current, deliberate language.
+> **Current authority:** the published Kit values in
+> `/Users/scott/ScottAI/01_Active_Projects/kit/lib/animation-tokens.json` and
+> `kit.scottelling.com/r/animation/tokens.json`. Cabinet keeps the useful
+> desk/sheet layout described below, but the Animation Kit now owns color,
+> typography, control density, shape, borders, depth, focus, state, and motion.
+> Where the older Manila Arc prose conflicts with this section, the Animation
+> Kit wins. The Appearance picker keeps Manila Arc themes available as a safe
+> visual rollback without reverting product work.
+
+## 0. Current Animation Kit rules
+
+1. **Solid, dark planes.** Canvas, rail, sheet, popover, and pressed surfaces
+   use the Kit's published OKLCH roles. No glass, blur, glow, decorative
+   gradients, or translucent content surfaces.
+2. **Outfit for interface and headings; JetBrains Mono for technical text.**
+   Cabinet's wordmark and document-specific reading faces remain brand/content
+   exceptions.
+3. **Tactile controls.** Primary controls are 44px tall, icon targets are 44px,
+   borders are visible but quiet, pressed states move by one pixel, and focus
+   rings are always visible.
+4. **Purposeful motion only.** Use the Kit's 120ms, 180ms, and 420ms durations
+   with its standard ease. Respect reduced motion. Motion communicates state or
+   location; it is never ambient decoration.
+5. **Preserve Cabinet's product.** Do not import the Animation Studio timeline,
+   canvas, or inspector simply because they exist in the Kit. Cabinet receives
+   only the components and patterns its own workflows need.
+6. **Repair during adoption.** Phone drawers must dismiss after navigation,
+   page-level horizontal overflow is forbidden, scroll ownership must be clear,
+   and every changed screen is checked from 320px through desktop widths.
+
+## Historical layout foundation retained by the swap
+
+The sections below describe the Manila Arc structure that the Animation Kit
+continues to use where it serves Cabinet: one outer workspace, one content
+sheet, shared viewer chrome, full-bleed phone content, and stable scroll
+ownership. Old color, borderless, radius, shadow, typography, and control-size
+instructions are historical and no longer authoritative.
 
 ---
 

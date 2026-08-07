@@ -190,7 +190,7 @@ export function CabinetTaskComposer({
       <div className="space-y-2">
         {cabinetName ? (
           <>
-            <h1 className="font-body-serif text-[2.2rem] leading-none tracking-tight text-foreground">
+            <h1 className="font-heading text-[2.2rem] font-semibold leading-[1.05] tracking-[-0.035em] text-foreground">
               {cabinetName}
             </h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -198,7 +198,7 @@ export function CabinetTaskComposer({
             </p>
           </>
         ) : (
-          <h1 className="font-body-serif text-[1.45rem] leading-tight tracking-tight text-foreground sm:text-[1.85rem]">
+          <h1 className="font-heading text-[1.65rem] font-semibold leading-[1.12] tracking-[-0.035em] text-foreground sm:text-[2rem]">
             {greetingLine}
           </h1>
         )}

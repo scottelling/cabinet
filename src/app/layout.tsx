@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Instrument_Serif, Cardo } from "next/font/google";
+import { Inter, JetBrains_Mono, Instrument_Serif, Cardo, Outfit } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeInitializer } from "@/components/layout/theme-initializer";
 import { RoomThemeSync } from "@/components/layout/room-theme-sync";
@@ -16,6 +16,11 @@ import "./globals.css";
 // pre-hydration and can't import from the bundle.
 const localeBootstrap = `(function(){try{var S=['en','he','zh-CN','zh-TW'],R=['he','ar','fa','ps','ur'];var l=localStorage.getItem('cabinet-locale');if(S.indexOf(l)<0)l='en';var d=R.indexOf(String(l).toLowerCase().split('-')[0])>=0?'rtl':'ltr';document.documentElement.lang=l;document.documentElement.dir=d;}catch(e){}})();`;
 
+// Move existing browsers onto the Animation Kit once, before first paint.
+// Later choices in Appearance are preserved, which also keeps the swap easy
+// to undo without rolling back product work.
+const appearanceBootstrap = `(function(){try{var K='cabinet-ui-system-version',V='animation-v1',T='cabinet-theme';if(localStorage.getItem(K)!==V){localStorage.setItem(K,V);localStorage.setItem(T,'animation')}if(localStorage.getItem(T)==='animation'){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-custom-theme','animation')}}catch(e){document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-custom-theme','animation')}})();`;
+
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
@@ -24,6 +29,12 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-animation-ui",
   subsets: ["latin"],
   display: "swap",
 });
@@ -60,16 +71,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${cardo.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} ${instrumentSerif.variable} ${cardo.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: localeBootstrap }} />
+        <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

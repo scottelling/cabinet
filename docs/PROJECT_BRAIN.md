@@ -14,6 +14,8 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 - `main` contains Cabinet Tools: removable room workspaces that agents can use
   and propose during chat. People can also create them through the visual Tool
   Builder without editing code or manifests.
+- The current release branch makes the shared Animation Kit Cabinet's default
+  visual system while keeping the previous themes as a one-click rollback.
 - Production is expected to deploy from `scottelling/cabinet` through Vercel.
 - `KB_PASSWORD` is intentionally unset, so the current site has no Cabinet password gate.
 - The official Cabinet project remains an update source, not the deployment source.
@@ -41,6 +43,9 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 - Review upstream changes on isolated branches; never auto-merge or auto-deploy them.
 - Use direct provider keys rather than requiring Vercel AI models.
 - Keep the Cabinet password gate disabled unless Scott explicitly changes that decision.
+- Treat the published Animation Kit tokens as visual authority. Preserve
+  Cabinet's product structure and specialist layouts; do not force Animation
+  Studio-specific timeline or canvas patterns into unrelated Cabinet screens.
 
 ## Known Gaps And Risks
 
@@ -54,6 +59,8 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 1. Preserve Scott-specific behavior while reviewing official improvements.
 2. Consolidate approved development branches into `main` through review requests.
 3. Keep mobile navigation, touch targets, agents, storage, and provider settings covered by tests.
+4. Keep Kit adoption reversible and prove changed screens at phone, tablet,
+   and desktop widths before release.
 
 ## Sources Of Truth
 

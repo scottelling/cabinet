@@ -455,7 +455,7 @@ export function SettingsPage() {
 
   // Sync active theme name on mount
   useEffect(() => {
-    setActiveThemeName(getStoredThemeName() || "paper");
+    setActiveThemeName(getStoredThemeName() || "animation");
     // Audit #045: hydrate match-system state.
     setThemeModeState(getStoredThemeMode());
     setThemePairState(getStoredThemePair());
@@ -578,7 +578,10 @@ export function SettingsPage() {
     sendTelemetry("theme.changed", { themeName: themeDef.name });
   };
 
-  const darkThemes = THEMES.filter((t) => t.type === "dark");
+  const animationTheme = THEMES.find((t) => t.name === "animation");
+  const darkThemes = THEMES.filter(
+    (t) => t.type === "dark" && t.name !== "animation"
+  );
   const lightThemes = THEMES.filter((t) => t.type === "light");
 
   const refresh = useCallback(async (silent = false, bust = false) => {
@@ -835,7 +838,7 @@ export function SettingsPage() {
                     else setTab(t.id);
                   }}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-[12.5px] font-medium transition-colors no-underline",
+                    "flex min-h-11 items-center gap-2 rounded-[var(--radius-control,var(--radius-lg))] px-3 py-2 text-[12.5px] font-medium transition-colors no-underline",
                     tab === t.id
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -852,7 +855,7 @@ export function SettingsPage() {
         {/* On narrow viewports the rail collapses; expose the tabs as a
             compact horizontal row at the top of the content pane. */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="flex items-center gap-1 overflow-x-auto border-b border-border px-3 py-1.5 md:hidden">
+          <div className="scrollbar-none flex min-h-14 items-center gap-1 overflow-x-auto border-b border-border px-3 py-1.5 md:hidden">
             {tabGroups.flatMap((g) => g.items).map((t) => (
               <a
                 key={t.id}
@@ -864,7 +867,7 @@ export function SettingsPage() {
                   else setTab(t.id);
                 }}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors no-underline",
+                  "flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--radius-control,var(--radius-lg))] px-3 py-2 text-[12px] font-medium transition-colors no-underline",
                   tab === t.id
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -891,6 +894,41 @@ export function SettingsPage() {
                 </p>
 
                 <div className="space-y-4">
+                  {animationTheme ? (
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={activeThemeName === animationTheme.name}
+                      onClick={() => selectTheme(animationTheme)}
+                      className={cn(
+                        "grid w-full gap-3 rounded-[var(--radius-card,var(--radius-xl))] border p-3 text-left transition-colors sm:grid-cols-[180px_1fr] sm:items-center",
+                        activeThemeName === animationTheme.name
+                          ? "border-primary bg-primary/8 ring-1 ring-primary/25"
+                          : "border-border bg-card hover:border-primary/40"
+                      )}
+                    >
+                      <ThemeThumbnail theme={animationTheme} />
+                      <span className="flex min-w-0 items-start gap-3">
+                        <span className="flex-1">
+                          <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            Animation Kit
+                            {activeThemeName === animationTheme.name ? (
+                              <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+                                Current
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                            Cabinet&apos;s complete dark workspace. Choose any theme below to change the look, then choose this card to return.
+                          </span>
+                        </span>
+                        {activeThemeName === animationTheme.name ? (
+                          <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                        ) : null}
+                      </span>
+                    </button>
+                  ) : null}
+
                   {/* Audit #045: Match system pair card sits at the top of
                       the picker. When enabled, Cabinet listens to OS
                       prefers-color-scheme and applies the chosen light or

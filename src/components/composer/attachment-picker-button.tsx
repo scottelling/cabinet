@@ -30,7 +30,7 @@ export function AttachmentPickerButton({
         aria-label={t("attachmentPicker:attachFiles")}
         title={t("attachmentPicker:attachFiles")}
         className={cn(
-          "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex size-11 items-center justify-center rounded-[var(--radius-control,var(--radius-lg))] text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40",
           className
         )}
       >
