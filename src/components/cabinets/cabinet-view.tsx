@@ -35,6 +35,7 @@ import type { ScheduleEvent } from "@/lib/agents/cron-compute";
 import { NextUpRuns } from "./next-up-runs";
 import { dedupFetch } from "@/lib/api/dedup-fetch";
 import { OrgChartModal } from "./org-chart-modal";
+import { CabinetToolsShelf } from "@/components/tools/cabinet-tools-shelf";
 
 export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
   const [overview, setOverview] = useState<CabinetOverview | null>(null);
@@ -284,6 +285,13 @@ export function CabinetView({ cabinetPath }: { cabinetPath: string }) {
               />
             </section>
 
+            <CabinetToolsShelf
+              cabinetPath={cabinetPath}
+              onOpen={(toolId) =>
+                setSection({ type: "tool", cabinetPath, slug: toolId })
+              }
+            />
+
             {/* Activity + Next-up runs */}
             <section className="grid gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2">
@@ -404,4 +412,3 @@ function CountPill({ label, value }: { label: string; value: number }) {
     </span>
   );
 }
-

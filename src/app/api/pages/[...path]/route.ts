@@ -9,6 +9,9 @@ import {
   removeInlineSourceByTreePath,
 } from "@/lib/knowledge-sources/store";
 import { storageOverCap } from "@/lib/cloud/tier";
+import { findOwningCabinetPathForPage } from "@/lib/cabinets/server-paths";
+import { ROOT_CABINET_PATH } from "@/lib/cabinets/paths";
+import { applyCabinetToolEvent } from "@/lib/tools/tool-platform";
 
 // Free cloud tier at its storage cap: block content writes (mirrors the upload route; reads,
 // renames, and deletes stay allowed). Inert off-cloud — storageOverCap is always false there.
@@ -19,6 +22,19 @@ const storageFull = () =>
   );
 
 type RouteParams = { params: Promise<{ path: string[] }> };
+
+async function notifyKnowledgeChanged(
+  virtualPath: string,
+  operation: "create" | "update" | "move" | "rename" | "delete",
+): Promise<void> {
+  const cabinetPath = await findOwningCabinetPathForPage(virtualPath);
+  if (cabinetPath === ROOT_CABINET_PATH) return;
+  await applyCabinetToolEvent(cabinetPath, {
+    type: "knowledge.changed",
+    sourceId: `${operation}:${virtualPath}:${Date.now()}`,
+    payload: { operation, path: virtualPath },
+  }).catch(() => []);
+}
 
 /** Convert a read-only-mount violation into a 403, else null (caller 500s). */
 function readOnly(error: unknown): NextResponse | null {
@@ -48,6 +64,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (await storageOverCap()) return storageFull();
     const body = await req.json();
     await writePage(virtualPath, body.content, body.frontmatter);
+    await notifyKnowledgeChanged(virtualPath, "update");
     autoCommit(virtualPath, "Update");
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -66,6 +83,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (await storageOverCap()) return storageFull();
     const body = await req.json();
     await createPage(virtualPath, body.title);
+    await notifyKnowledgeChanged(virtualPath, "create");
     invalidateTreeCache();
     autoCommit(virtualPath, "Add");
     return NextResponse.json({ ok: true }, { status: 201 });
@@ -93,6 +111,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         fromVirtualPath: virtualPath,
         message: `Rename ${virtualPath} to ${newPath}`,
       });
+      await notifyKnowledgeChanged(newPath, "rename");
       return NextResponse.json({ ok: true, newPath, references });
     }
     const fromParent = virtualPath.split("/").slice(0, -1).join("/");
@@ -114,6 +133,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         message: `Move ${virtualPath} to ${newPath}`,
       });
     }
+    await notifyKnowledgeChanged(newPath, "move");
     return NextResponse.json({ ok: true, newPath });
   } catch (error) {
     const ro = readOnly(error);
@@ -127,10 +147,18 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   try {
     const { path: segments } = await params;
     const virtualPath = segments.join("/");
+    const cabinetPath = await findOwningCabinetPathForPage(virtualPath);
     // Strictly-under check: a file inside a read-only mount can't be deleted,
     // but the mount node itself can (that's "disconnect").
     await assertWritablePath(virtualPath);
     await deletePage(virtualPath);
+    if (cabinetPath !== ROOT_CABINET_PATH) {
+      await applyCabinetToolEvent(cabinetPath, {
+        type: "knowledge.changed",
+        sourceId: `delete:${virtualPath}:${Date.now()}`,
+        payload: { operation: "delete", path: virtualPath },
+      }).catch(() => []);
+    }
     // If this was an inline knowledge mount, clear its registry record too so
     // the source doesn't outlive the symlink (disconnect cleanup).
     await removeInlineSourceByTreePath(virtualPath).catch(() => {});

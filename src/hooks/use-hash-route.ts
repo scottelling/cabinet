@@ -121,6 +121,11 @@ function buildHash(section: SectionState, pagePath: string | null): string {
   if (section.type === "tasks") {
     return buildTasksHash(cabinetPath);
   }
+  if (section.type === "tool" && section.slug) {
+    return isRoot
+      ? `#/tools/${encodePathSegment(section.slug)}`
+      : `#/cabinet/${encodePathSegment(cabinetPath)}/tools/${encodePathSegment(section.slug)}`;
+  }
   if (section.type === "settings") {
     return section.slug
       ? `#/settings/${encodePathSegment(section.slug)}`
@@ -193,7 +198,7 @@ function parseHash(hash: string): RouteState {
     // makes `#/cabinet/a/b/c` reload correctly instead of collapsing to `a`.
     // Path outputs are run through normalizeRoutePath so Windows `\` separators
     // (PR #93 / virtual-paths) collapse to `/` before they reach app state.
-    const CABINET_MARKERS = new Set(["data", "agents", "tasks"]);
+    const CABINET_MARKERS = new Set(["data", "agents", "tasks", "tools"]);
     const rest = parts.slice(1);
     const markerIdx = rest.findIndex((seg) => CABINET_MARKERS.has(seg));
 
@@ -241,6 +246,20 @@ function parseHash(hash: string): RouteState {
         };
       }
       return { section: { type: "agents", cabinetPath }, pagePath: null };
+    }
+
+    if (marker === "tools") {
+      if (after[0]) {
+        return {
+          section: {
+            type: "tool",
+            cabinetPath,
+            slug: decodePathSegment(after[0]),
+          },
+          pagePath: null,
+        };
+      }
+      return { section: { type: "cabinet", cabinetPath }, pagePath: null };
     }
 
     // marker === "tasks"
@@ -329,6 +348,17 @@ function parseHash(hash: string): RouteState {
     };
   }
 
+  if (parts[0] === "tools" && parts[1]) {
+    return {
+      section: {
+        type: "tool",
+        cabinetPath: ROOT_CABINET_PATH,
+        slug: decodePathSegment(parts[1]),
+      },
+      pagePath: null,
+    };
+  }
+
   return { section: { type: "home" }, pagePath: null };
 }
 
@@ -408,6 +438,9 @@ async function applyCleanRoute(route: CleanRoute): Promise<void> {
       return scopeTo(route.cabinetPath);
     case "task":
       setSection({ type: "task", cabinetPath: route.cabinetPath, taskId: route.taskId });
+      return scopeTo(route.cabinetPath);
+    case "tool":
+      setSection({ type: "tool", cabinetPath: route.cabinetPath, slug: route.toolId });
       return scopeTo(route.cabinetPath);
     case "content": {
       if (!route.path) return goGlobal({ type: "home" });

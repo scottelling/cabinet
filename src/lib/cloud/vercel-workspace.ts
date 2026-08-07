@@ -4,6 +4,7 @@ import path from "node:path";
 import { gunzip, gzip } from "node:zlib";
 import { promisify } from "node:util";
 import {
+  BlobPreconditionFailedError,
   del,
   get,
   list,
@@ -21,6 +22,7 @@ const gunzipAsync = promisify(gunzip);
 
 const LEGACY_SNAPSHOT_PATH = "cabinet-runtime/workspace-v1.json.gz";
 const SNAPSHOT_PREFIX = "cabinet-runtime/snapshots/";
+const SNAPSHOT_HEAD_PATH = "cabinet-runtime/workspace-v1-head.json";
 const SNAPSHOT_VERSION = 1;
 const MAX_SNAPSHOT_BYTES = 64 * 1024 * 1024;
 const SNAPSHOTS_TO_KEEP = 25;
@@ -53,15 +55,27 @@ interface WorkspaceSnapshot {
 
 interface WorkspaceCache {
   snapshotPath: string | null;
+  headEtag: string | null;
   initialized: boolean;
 }
 
 let cache: WorkspaceCache = {
   snapshotPath: null,
+  headEtag: null,
   initialized: false,
 };
 
 let queue: Promise<unknown> = Promise.resolve();
+
+interface WorkspaceBlobStore {
+  get: typeof get;
+  put: typeof put;
+  list: typeof list;
+  del: typeof del;
+}
+
+const productionBlobStore: WorkspaceBlobStore = { get, put, list, del };
+let blobStore: WorkspaceBlobStore = productionBlobStore;
 
 export class CloudWorkspaceConflictError extends Error {
   constructor() {
@@ -250,11 +264,47 @@ async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffe
 }
 
 async function listSnapshots() {
-  const result = await list({ prefix: SNAPSHOT_PREFIX, limit: 1000 });
+  const result = await blobStore.list({ prefix: SNAPSHOT_PREFIX, limit: 1000 });
   return result.blobs.sort((left, right) => {
     const time = right.uploadedAt.getTime() - left.uploadedAt.getTime();
     return time || right.pathname.localeCompare(left.pathname);
   });
+}
+
+interface WorkspaceHead {
+  version: 1;
+  snapshotPath: string;
+}
+
+async function readWorkspaceHead(): Promise<{
+  snapshotPath: string | null;
+  etag: string | null;
+}> {
+  const result = await blobStore
+    .get(SNAPSHOT_HEAD_PATH, { access: "private", useCache: false })
+    .catch(() => null);
+  if (!result?.stream) return { snapshotPath: null, etag: null };
+  try {
+    const parsed = JSON.parse(
+      (await streamToBuffer(result.stream)).toString("utf8"),
+    ) as Partial<WorkspaceHead>;
+    if (
+      parsed.version !== 1 ||
+      typeof parsed.snapshotPath !== "string" ||
+      !parsed.snapshotPath.startsWith(SNAPSHOT_PREFIX)
+    ) {
+      throw new Error("Invalid Cabinet cloud workspace head.");
+    }
+    return {
+      snapshotPath: parsed.snapshotPath,
+      etag: result.blob.etag,
+    };
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("Invalid Cabinet cloud workspace head.");
+    }
+    throw error;
+  }
 }
 
 async function latestSnapshotPath(): Promise<string | null> {
@@ -266,18 +316,25 @@ async function refreshWorkspace(): Promise<void> {
   assertSafeCloudDataDir();
   await fs.mkdir(DATA_DIR, { recursive: true });
 
-  const versionedPath = await latestSnapshotPath();
+  const head = await readWorkspaceHead();
+  const versionedPath = head.snapshotPath || (await latestSnapshotPath());
   const snapshotPath = versionedPath || LEGACY_SNAPSHOT_PATH;
-  if (cache.initialized && cache.snapshotPath === snapshotPath) return;
+  if (
+    cache.initialized &&
+    cache.snapshotPath === snapshotPath &&
+    cache.headEtag === head.etag
+  ) {
+    return;
+  }
 
-  const result = await get(snapshotPath, { access: "private" });
+  const result = await blobStore.get(snapshotPath, { access: "private", useCache: false });
 
   if (!result) {
     if (!cache.initialized) {
       await fs.rm(DATA_DIR, { recursive: true, force: true });
       await fs.mkdir(DATA_DIR, { recursive: true });
     }
-    cache = { snapshotPath: null, initialized: true };
+    cache = { snapshotPath: null, headEtag: head.etag, initialized: true };
     return;
   }
 
@@ -287,37 +344,75 @@ async function refreshWorkspace(): Promise<void> {
 
   await unpackWorkspace(await streamToBuffer(result.stream));
   await migrateHostedRuntime();
-  cache = { snapshotPath: result.blob.pathname, initialized: true };
+  cache = {
+    snapshotPath: result.blob.pathname,
+    headEtag: head.etag,
+    initialized: true,
+  };
+}
+
+function isWorkspaceHeadConflict(error: unknown): boolean {
+  return (
+    error instanceof BlobPreconditionFailedError ||
+    (error instanceof Error &&
+      /precondition|already exists|overwrite/i.test(error.message))
+  );
+}
+
+async function commitWorkspaceHead(
+  snapshotPath: string,
+  expectedEtag: string | null,
+): Promise<string> {
+  const head: WorkspaceHead = { version: 1, snapshotPath };
+  try {
+    const savedHead = await blobStore.put(
+      SNAPSHOT_HEAD_PATH,
+      JSON.stringify(head),
+      {
+        access: "private",
+        contentType: "application/json",
+        cacheControlMaxAge: 60,
+        allowOverwrite: expectedEtag !== null,
+        ...(expectedEtag ? { ifMatch: expectedEtag } : {}),
+      },
+    );
+    return savedHead.etag;
+  } catch (error) {
+    if (isWorkspaceHeadConflict(error)) throw new CloudWorkspaceConflictError();
+    throw error;
+  }
 }
 
 async function saveWorkspace(): Promise<void> {
   const snapshot = await packWorkspace();
-  const latestBeforeSave = await latestSnapshotPath();
-  const baseSnapshot =
-    cache.snapshotPath === LEGACY_SNAPSHOT_PATH ? null : cache.snapshotPath;
-  if (latestBeforeSave !== baseSnapshot) {
-    cache = { snapshotPath: null, initialized: false };
-    throw new CloudWorkspaceConflictError();
-  }
-
   const timestamp = String(Date.now()).padStart(13, "0");
   const pathname = `${SNAPSHOT_PREFIX}${timestamp}-${randomUUID()}.json.gz`;
-  const saved = await put(pathname, snapshot, {
+  const saved = await blobStore.put(pathname, snapshot, {
     access: "private",
     contentType: "application/gzip",
     cacheControlMaxAge: 60,
     allowOverwrite: false,
   });
-  cache = { snapshotPath: saved.pathname, initialized: true };
+
+  try {
+    const headEtag = await commitWorkspaceHead(saved.pathname, cache.headEtag);
+    cache = {
+      snapshotPath: saved.pathname,
+      headEtag,
+      initialized: true,
+    };
+  } catch (error) {
+    await blobStore.del(saved.pathname).catch(() => {});
+    cache = { snapshotPath: null, headEtag: null, initialized: false };
+    throw error;
+  }
 
   const snapshots = await listSnapshots();
   const stale = snapshots.slice(SNAPSHOTS_TO_KEEP).map((blob) => blob.pathname);
   if (stale.length) {
-    await del(stale).catch(() => {});
+    await blobStore.del(stale).catch(() => {});
   }
-  if (latestBeforeSave === null) {
-    await del(LEGACY_SNAPSHOT_PATH).catch(() => {});
-  }
+  await blobStore.del(LEGACY_SNAPSHOT_PATH).catch(() => {});
 }
 
 async function runWorkspaceOperation<T>(
@@ -339,7 +434,7 @@ async function runWorkspaceOperation<T>(
   // A single function instance serializes requests through `queue` below.
   // Across instances, the snapshot ETag provides optimistic concurrency: a
   // stale writer gets a 409 instead of silently overwriting newer work.
-  cache = { snapshotPath: null, initialized: false };
+  cache = { snapshotPath: null, headEtag: null, initialized: false };
   await refreshWorkspace();
   const result = await operation();
   await saveWorkspace();
@@ -362,6 +457,22 @@ export function withVercelWorkspace<T>(
 }
 
 export async function resetVercelWorkspaceForTests(): Promise<void> {
-  cache = { snapshotPath: null, initialized: false };
+  cache = { snapshotPath: null, headEtag: null, initialized: false };
   queue = Promise.resolve();
+  blobStore = productionBlobStore;
+}
+
+export function setVercelWorkspaceBlobStoreForTests(
+  store: WorkspaceBlobStore,
+): void {
+  blobStore = store;
+  cache = { snapshotPath: null, headEtag: null, initialized: false };
+  queue = Promise.resolve();
+}
+
+export async function commitVercelWorkspaceHeadForTests(
+  snapshotPath: string,
+  expectedEtag: string | null,
+): Promise<string> {
+  return commitWorkspaceHead(snapshotPath, expectedEtag);
 }

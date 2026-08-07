@@ -10,6 +10,7 @@ import type { SelectedSection } from "@/stores/app-store";
  *                                        (resolved downstream — see CleanRoute.content)
  *   /room/<cab>/-/agents[/<sub|slug>]  → a cabinet's agents view / sub-tab / agent
  *   /room/<cab>/-/tasks[/<id>]         → a cabinet's tasks / a task
+ *   /room/<cab>/-/tools/<id>           → an installed Cabinet Tool workspace
  *   /settings[/<tab>]  /integrations[/<id>]  /help  /registry
  *
  * `-` is a reserved view marker that terminates the cabinet path (a folder
@@ -33,7 +34,8 @@ export type CleanRoute =
   | { kind: "agents"; cabinetPath: string; agentsTab?: AgentsTab }
   | { kind: "agent"; cabinetPath: string; slug: string }
   | { kind: "tasks"; cabinetPath: string }
-  | { kind: "task"; cabinetPath: string; taskId: string };
+  | { kind: "task"; cabinetPath: string; taskId: string }
+  | { kind: "tool"; cabinetPath: string; toolId: string };
 
 const VIEW_MARKER = "-";
 
@@ -96,6 +98,10 @@ export function buildPath(
       return cab && section.taskId
         ? `/room/${enc(cab)}/${VIEW_MARKER}/tasks/${enc(section.taskId)}`
         : "/";
+    case "tool":
+      return cab && section.slug
+        ? `/room/${enc(cab)}/${VIEW_MARKER}/tools/${enc(section.slug)}`
+        : "/";
     default:
       return "/";
   }
@@ -145,6 +151,9 @@ export function parsePath(pathname: string): CleanRoute {
     if (view === "tasks") {
       if (arg) return { kind: "task", cabinetPath, taskId: arg };
       return { kind: "tasks", cabinetPath };
+    }
+    if (view === "tools" && arg) {
+      return { kind: "tool", cabinetPath, toolId: arg };
     }
     // Unknown view marker → treat the prefix as a cabinet root (content).
     return { kind: "content", path: cabinetPath };

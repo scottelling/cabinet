@@ -25,6 +25,7 @@ import {
   turnsDir as turnsDirFs,
 } from "./conversation-turns";
 import { publishConversationEvent } from "./conversation-events";
+import { applyCabinetToolEvent } from "../tools/tool-platform";
 import { isLegacyAdapterType } from "./adapters/legacy-ids";
 import { agentAdapterRegistry } from "./adapters/registry";
 import { discoverCabinetPaths } from "../cabinets/discovery";
@@ -55,6 +56,19 @@ import {
 } from "../storage/fs-operations";
 
 export const CONVERSATIONS_DIR = path.join(DATA_DIR, ".agents", ".conversations");
+
+async function applyCompletedTaskAutomations(
+  cabinetPath: string | undefined,
+  taskId: string,
+  summary?: string,
+): Promise<void> {
+  if (!cabinetPath) return;
+  await applyCabinetToolEvent(cabinetPath, {
+    type: "task.completed",
+    sourceId: taskId,
+    payload: summary ? { summary } : undefined,
+  }).catch(() => []);
+}
 
 /** Classify adapter-reported failure text when the daemon hasn't set hints yet. */
 function classifyAdapterFailure(
@@ -2576,6 +2590,9 @@ export async function appendAgentTurn(
     seq: seq ?? undefined,
     payload: { turn: turnNumber, role: "agent", pending: !!input.pending },
   });
+  if (!input.pending && !failed) {
+    await applyCompletedTaskAutomations(cp, id, updatedMeta.summary);
+  }
 
   return turn;
 }
@@ -2670,6 +2687,9 @@ export async function updateAgentTurn(
     seq: seq ?? undefined,
     payload: { turn: turnNumber, role: "agent" },
   });
+  if (!nextTurn.pending && !failed) {
+    await applyCompletedTaskAutomations(cp, id, updatedMeta.summary);
+  }
 
   return nextTurn;
 }

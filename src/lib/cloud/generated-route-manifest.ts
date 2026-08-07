@@ -876,6 +876,12 @@ const routes: CloudRouteEntry[] = [
     load: async () => (await import("@/app/api/telemetry/route")) as unknown as CloudRouteModule,
   },
   {
+    pathname: "/api/tools",
+    pattern: new RegExp("^/api/tools/?$"),
+    params: [],
+    load: async () => (await import("@/app/api/tools/route")) as unknown as CloudRouteModule,
+  },
+  {
     pathname: "/api/tree",
     pattern: new RegExp("^/api/tree/?$"),
     params: [],

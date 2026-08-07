@@ -10,11 +10,16 @@ This file lists behavior that must survive official Cabinet updates. Update it w
 - Cloud-compatible agent conversations and API routes.
 - No Cabinet password gate while `KB_PASSWORD` remains unset.
 - Production source is `scottelling/cabinet`, not `cabinetai/cabinet`.
+- Larger mobile controls, type, icons, and touch targets.
+- Mobile navigation that keeps Agents and Tasks inside the active Cabinet room.
+- A Cabinet Tools platform that lets rooms install removable declarative
+  workspaces; lets hosted agents use tool data and propose new tools or
+  versions during chat; renders stateful forms, tables, boards, charts, and
+  metrics; and provides approved automations, audit history, disable/enable,
+  recoverable removal, and rollback controls.
 
 ## In Development Branches
 
-- Larger mobile controls, type, icons, and touch targets.
-- Mobile navigation that keeps Agents and Tasks inside the active Cabinet room.
 - Additional Vercel support for CLI-backed agent providers.
 
 These items are not considered production behavior until their branches are reviewed and merged into `main`.
