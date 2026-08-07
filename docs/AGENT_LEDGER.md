@@ -89,3 +89,28 @@ Append meaningful work receipts. Preserve prior entries.
   Cabinet child-task handoffs are reused rather than replaced. This work is not
   merged, pushed, previewed, or deployed.
 - Next action: Publish a Vercel preview for review before merging.
+
+## 2026-08-06 — Integrity release deployed
+
+- Agent: Codex
+- Scope: Completed the approved renovation and dependency-security batches,
+  merged the reviewed official Cabinet update, and released the stateful
+  Cabinet Tools platform with the mobile room-navigation repairs.
+- Deploy mode: Git-connected Vercel through pull request 4.
+- Production source: merge commit `8461fce41ec7710a3489a95db5f7d5ababe39aca`.
+- Production deployment: `dpl_BiD4PXd3Zgv64uWL1AacAndVrCpu`.
+- Verification:
+  - The hosted dependency audit has no high- or critical-severity findings.
+  - All 430 unit tests passed; lint had no errors; the Next.js 16.3 production
+    build passed.
+  - GitHub lint/unit, packaged install-flow, and end-to-end jobs passed.
+  - The Vercel preview passed before merge.
+  - Local browser proof covered onboarding, room home, Agents, Tasks, Cabinet
+    Tools, no-login behavior, and phone, tablet, and desktop widths.
+- Live check:
+  - `https://cabinet.scottelling.com` returned 200 and opened the existing
+    Scott Cabinet room without a login screen.
+  - The Tools shelf, Agents route, Tasks route, and `/api/health` loaded without
+    browser console errors.
+- Open loops:
+  - Build and release the visual Tool Builder as the next independent change.

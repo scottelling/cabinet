@@ -1,6 +1,9 @@
 "use client";
 
-import { ArrowRight, Loader2, Plus } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Loader2, Plus, WandSparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ToolBuilderDialog } from "@/components/tools/tool-builder-dialog";
 import { ToolIcon } from "@/components/tools/tool-icon";
 import { useCabinetTools } from "@/hooks/use-cabinet-tools";
 
@@ -11,6 +14,7 @@ export function CabinetToolsShelf({
   cabinetPath: string;
   onOpen: (toolId: string) => void;
 }) {
+  const [builderOpen, setBuilderOpen] = useState(false);
   const { inventory, loading, changingToolId, error, install } =
     useCabinetTools(cabinetPath);
   const installedIds = new Set(
@@ -21,6 +25,13 @@ export function CabinetToolsShelf({
   );
   const available = inventory.catalog.filter(
     (tool) => !installedIds.has(tool.id) && !proposalIds.has(tool.id),
+  );
+  const existingToolIds = Array.from(
+    new Set([
+      ...inventory.catalog.map((tool) => tool.id),
+      ...inventory.installed.map((entry) => entry.manifest.id),
+      ...inventory.proposals.map((entry) => entry.manifest.id),
+    ]),
   );
 
   if (loading && inventory.catalog.length === 0) {
@@ -36,7 +47,7 @@ export function CabinetToolsShelf({
 
   return (
     <section aria-labelledby="cabinet-tools-title" className="mb-8 space-y-3">
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2
             id="cabinet-tools-title"
@@ -48,6 +59,15 @@ export function CabinetToolsShelf({
             Add focused workspaces without changing the rest of Cabinet.
           </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full rounded-xl sm:w-auto"
+          onClick={() => setBuilderOpen(true)}
+        >
+          <WandSparkles className="size-4" />
+          Build a tool
+        </Button>
       </div>
 
       {error ? (
@@ -142,6 +162,16 @@ export function CabinetToolsShelf({
           </button>
         ))}
       </div>
+
+      <ToolBuilderDialog
+        open={builderOpen}
+        onOpenChange={setBuilderOpen}
+        existingToolIds={existingToolIds}
+        onInstall={async (manifest) => {
+          const installed = await install(manifest);
+          onOpen(installed.manifest.id);
+        }}
+      />
     </section>
   );
 }
