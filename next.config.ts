@@ -30,7 +30,11 @@ const nextConfig: NextConfig = {
       exclude: ["error", "warn"],
     },
   },
-  output: "standalone",
+  // Cabinet's desktop and self-hosted distributions need Next's standalone
+  // bundle. Vercel builds its own server output and Next 16.3 no longer emits
+  // the root trace file that Vercel expects when standalone mode is forced.
+  // Leave output unset only in Vercel so each target gets its native bundle.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   // Audit #219 / #220: the floating Next.js dev indicator sat on top of the
   // sidebar "New Page" button and was visible in the product chrome even in
   // dev. Disable it entirely — actual Next.js compile errors still surface
