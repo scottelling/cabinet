@@ -45,6 +45,28 @@ export interface ConversationArtifact {
   label?: string;
 }
 
+export type ConversationBrowserAction = "read" | "links" | "screenshot";
+export type ConversationBrowserEngine = "kitesurf" | "chromium";
+export type ConversationBrowserRequestedEngine = "auto" | ConversationBrowserEngine;
+
+/**
+ * Read-only browser work performed during an agent conversation. The record
+ * deliberately excludes page content, credentials, cookies, and request
+ * headers; it is safe to show in the task UI and persist with conversation
+ * metadata.
+ */
+export interface ConversationBrowserEvidence {
+  id: string;
+  action: ConversationBrowserAction;
+  url: string;
+  requestedEngine: ConversationBrowserRequestedEngine;
+  engine: ConversationBrowserEngine;
+  fallbackUsed: boolean;
+  retrievedAt: string;
+  browserMs?: number;
+  artifactPath?: string;
+}
+
 export interface TurnTokens {
   input: number;
   output: number;
@@ -123,6 +145,8 @@ export interface ConversationMeta {
    */
   attachmentPaths?: string[];
   artifactPaths: string[];
+  /** Read-only web pages and captures used by this conversation. */
+  browserEvidence?: ConversationBrowserEvidence[];
   summary?: string;
   contextSummary?: string;
 

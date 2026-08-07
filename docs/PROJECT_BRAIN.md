@@ -14,6 +14,10 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 - `main` contains Cabinet Tools: removable room workspaces that agents can use
   and propose during chat. People can also create them through the visual Tool
   Builder without editing code or manifests.
+- Hosted direct-provider agents have a read-only remote browser for public web
+  research. It uses Kitesurf first, falls back to Chromium for incompatible
+  pages, saves screenshots inside the room, and exposes source receipts in the
+  conversation.
 - The current release branch makes the shared Animation Kit Cabinet's default
   visual system while keeping the previous themes as a one-click rollback.
 - Production is expected to deploy from `scottelling/cabinet` through Vercel.

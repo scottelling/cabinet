@@ -134,6 +134,8 @@ export interface TaskMeta {
    * show task artifacts inline (one less click than the right-side panel).
    */
   artifactPaths?: string[];
+  /** Read-only web sources and captures used by the agent. */
+  browserEvidence?: import("./conversations").ConversationBrowserEvidence[];
   titlePinned?: boolean;
   summaryEditedAt?: string;
   errorKind?: string;

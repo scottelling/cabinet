@@ -17,6 +17,7 @@ Read this after the root `AGENTS.md`.
 | Authentication or public access | `AUTH.md`, `PROJECT_BRAIN.md` |
 | Mobile interface | `MOBILE_RESPONSIVE_PRD.md`, `DESIGN_PRD.md` |
 | Agents, tasks, or providers | `PROVIDER-CLI.md`, `TASKS.md`, `TASKS_CONVERSATIONS_PRD.md` |
+| Agent web research or remote browser | `AGENT_BROWSER.md`, `CUSTOMIZATIONS.md` |
 | Storage or hosted runtime | `CLOUD_PRD.md`, `CUSTOMIZATIONS.md` |
 
 ## Validation

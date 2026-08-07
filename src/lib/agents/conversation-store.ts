@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import type {
+  ConversationBrowserEvidence,
   ConversationArtifact,
   ConversationDetail,
   ConversationErrorKind,
@@ -1465,6 +1466,7 @@ export async function finalizeConversation(
     errorKind?: ConversationErrorKind | null;
     errorHint?: string | null;
     errorRetryAfterSec?: number | null;
+    browserEvidence?: ConversationBrowserEvidence[];
   },
   cabinetPath?: string
 ): Promise<ConversationMeta | null> {
@@ -1554,6 +1556,13 @@ export async function finalizeConversation(
     );
   } else {
     meta.artifactPaths = sanitizedArtifactPaths;
+  }
+  if (input.browserEvidence?.length) {
+    const byId = new Map(
+      (meta.browserEvidence || []).map((evidence) => [evidence.id, evidence]),
+    );
+    for (const evidence of input.browserEvidence) byId.set(evidence.id, evidence);
+    meta.browserEvidence = Array.from(byId.values());
   }
 
   // First-turn tokens — G7. Only write when the caller provided a reading and

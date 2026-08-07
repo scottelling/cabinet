@@ -82,7 +82,12 @@ export interface CabinetInstance {
 }
 
 export async function bootCabinet(options: BootOptions = {}): Promise<CabinetInstance> {
-  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "cabinet-e2e-"));
+  // macOS reports os.tmpdir() under /var but process.cwd() resolves the same
+  // directory through /private/var. Canonicalize once so cwd safety assertions
+  // compare identities rather than two spellings of the same directory.
+  const dataDir = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "cabinet-e2e-")),
+  );
   const seed = options.seed ?? DEFAULT_SEED;
   await fs.cp(seed, dataDir, { recursive: true });
 
@@ -96,7 +101,9 @@ export async function bootCabinet(options: BootOptions = {}): Promise<CabinetIns
   // the "fake" agent test would silently invoke the real model. Instead we give
   // the child processes a temp HOME and install the fakes into its
   // .local/bin, which that same rule puts ahead of everything else.
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), "cabinet-e2e-home-"));
+  const home = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "cabinet-e2e-home-")),
+  );
   const binDir = path.join(home, ".local", "bin");
   await fs.mkdir(binDir, { recursive: true });
 
@@ -154,10 +161,20 @@ export async function bootCabinet(options: BootOptions = {}): Promise<CabinetIns
   const daemonUrl = `http://127.0.0.1:${daemonPort}`;
 
   const close = async () => {
-    for (const child of children) child.kill("SIGTERM");
+    await Promise.all(children.map((child) => stopChild(child)));
     await Promise.all([...fakes.values()].map((fake) => fake.cleanup()));
-    await fs.rm(dataDir, { recursive: true, force: true });
-    await fs.rm(home, { recursive: true, force: true });
+    await fs.rm(dataDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 50,
+    });
+    await fs.rm(home, {
+      recursive: true,
+      force: true,
+      maxRetries: 5,
+      retryDelay: 50,
+    });
   };
 
   const agent = (name: string): FakeAgentCli => {
@@ -191,6 +208,22 @@ export async function bootCabinet(options: BootOptions = {}): Promise<CabinetIns
     logs: () => logs.join(""),
     close,
   };
+}
+
+async function stopChild(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  const exited = new Promise<void>((resolve) => child.once("exit", () => resolve()));
+  child.kill("SIGTERM");
+  const settled = await Promise.race([
+    exited.then(() => true),
+    new Promise<false>((resolve) => setTimeout(() => resolve(false), 2_000)),
+  ]);
+  if (settled || child.exitCode !== null || child.signalCode !== null) return;
+  child.kill("SIGKILL");
+  await Promise.race([
+    exited,
+    new Promise<void>((resolve) => setTimeout(resolve, 1_000)),
+  ]);
 }
 
 async function waitForOk(url: string, timeoutMs = 90_000): Promise<void> {

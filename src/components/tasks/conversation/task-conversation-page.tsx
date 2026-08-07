@@ -53,6 +53,7 @@ import { FolderTabs } from "@/components/layout/folder-tabs";
 import { TurnBlock, type TurnBlockAgent } from "./turn-block";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { ConversationApprovalPanel } from "@/components/agents/conversation-approval-panel";
+import { BrowserEvidencePanel } from "@/components/agents/browser-evidence-panel";
 import { ArtifactsList } from "./artifacts-list";
 import { DiffPanel } from "./diff-panel";
 import { LogsPanel } from "./logs-panel";
@@ -2092,6 +2093,21 @@ export function TaskConversationPage({
                 />
               ))}
             </div>
+            {task.meta.browserEvidence?.length ? (
+              <div className="mx-auto max-w-3xl px-1 pt-2">
+                <BrowserEvidencePanel
+                  evidence={task.meta.browserEvidence}
+                  onOpenArtifact={(artifactPath) => {
+                    void openArtifactPath(
+                      artifactPath,
+                      task.meta.cabinetPath
+                        ? { type: "page", cabinetPath: task.meta.cabinetPath }
+                        : { type: "page" },
+                    );
+                  }}
+                />
+              </div>
+            ) : null}
             {/* Proposed agent actions — sibling views: conversation-result-view.tsx, conversation-live-view.tsx */}
             <div className="mx-auto max-w-3xl px-1 pt-2">
               <ConversationApprovalPanel

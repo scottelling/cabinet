@@ -216,3 +216,36 @@ Append meaningful work receipts. Preserve prior entries.
     pixels it stayed within the viewport with no page overflow, while the
     close and rating controls measured 44 by 44 CSS pixels.
 - Open loops: None for the Animation Kit swap.
+
+## 2026-08-07 — Read-only agent browser prepared
+
+- Agent: Codex
+- Scope: Added a native web research tool for hosted direct-provider agents,
+  using Cloudflare Browser Rendering with Kitesurf first and Chromium as a
+  compatibility fallback.
+- Useful result:
+  - Agents can read current public pages, collect page links, and capture
+    screenshots while a conversation is running.
+  - Every browser action appears in the conversation as inspectable evidence;
+    screenshots are saved into the active Cabinet room.
+  - Browser access is deliberately read-only. It cannot click controls, fill
+    forms, sign in, upload, purchase, publish, send messages, or delete data.
+  - Private network targets, credential-bearing URLs, and secret-like query
+    parameters are rejected before a network request is made.
+  - The Cloudflare account ID and Browser Run token can be saved alongside the
+    existing direct AI provider keys in Settings.
+- Verification:
+  - All 441 unit and integration checks passed, including Kitesurf requests,
+    Chromium fallback, evidence persistence, screenshot storage, and unsafe URL
+    rejection.
+  - All 16 end-to-end browser journeys passed after making the shared test
+    harness robust to macOS temporary-path aliases and process cleanup races.
+  - TypeScript and the production build passed. Repository lint reported no
+    errors; its existing warnings remain.
+  - Browser proof at phone, tablet, and desktop widths found no page overflow,
+    no browser console errors, and no visible evidence control smaller than 44
+    CSS pixels.
+- Release: Pending GitHub and production deployment proof.
+- Open loops:
+  - Real Cloudflare browsing remains off until an account ID and scoped Browser
+    Run token are saved in Cabinet Settings.
