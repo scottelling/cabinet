@@ -172,8 +172,16 @@ Append meaningful work receipts. Preserve prior entries.
     Builder with no console errors.
   - Width checks at 320, 375, 414, 768, 1280, and 1440 CSS pixels found no
     page-level horizontal overflow. The Tool Builder fit inside a 375px phone.
-- Remaining work: publish a preview, verify the hosted result, merge, and check
-  `cabinet.scottelling.com` in production.
+- Release:
+  - GitHub pull request 7 passed the hosted build, lint/unit, install-flow, and
+    end-to-end checks and merged as `4c61e87a3224dc5e5c222c54c2941ad790af89a7`.
+  - Vercel production deployment `dpl_GBf6LjbCrAufv4BAgxg888cBBtUT` served the
+    Animation Kit at `https://cabinet.scottelling.com`.
+  - Live phone and desktop proof confirmed the default Animation theme,
+    existing Cabinet data, working Settings navigation, and no page overflow
+    or browser console errors.
+- Open loops: live proof exposed one legacy feedback treatment, closed by the
+  follow-up release below.
 
 ## 2026-08-06 — Animation Kit feedback follow-up prepared
 
@@ -195,5 +203,16 @@ Append meaningful work receipts. Preserve prior entries.
   - Repository lint completed with no errors; its existing warnings remain.
   - The Next.js production build passed with the repository's existing dynamic
     file-tracing warnings.
-- Remaining work: publish this production correction and verify the real
-  feedback window on phone and desktop.
+- Release:
+  - GitHub pull request 8 passed the hosted build, lint/unit, install-flow, and
+    end-to-end checks and merged as `27d1a66b729f6bc1016eab8abce910884d56c0e6`.
+  - Vercel production deployment `dpl_9NDMvnJmGs3zrdu532UVNthxLqWC` served the
+    correction at `https://cabinet.scottelling.com`.
+- Live check:
+  - The real feedback dialog appeared on the custom production domain with a
+    fully opaque Kit overlay, no backdrop blur, no floating scenery, and no
+    decorative burst.
+  - At 1280 CSS pixels the dialog was centered and fully visible. At 375 CSS
+    pixels it stayed within the viewport with no page overflow, while the
+    close and rating controls measured 44 by 44 CSS pixels.
+- Open loops: None for the Animation Kit swap.
