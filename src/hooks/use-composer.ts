@@ -42,6 +42,8 @@ export interface UseComposerOptions {
   getMentionInsertBehavior?: (item: MentionableItem) => MentionInsertBehavior | void;
   attachments?: UseComposerAttachmentsReturn;
   stagingClientUuid?: string;
+  /** Initial draft text for a newly mounted composer. */
+  initialInput?: string;
 }
 
 export interface UseComposerReturn {
@@ -69,10 +71,11 @@ export function useComposer({
   getMentionInsertBehavior,
   attachments,
   stagingClientUuid,
+  initialInput = "",
   pinnedPagePath = null,
 }: UseComposerOptions): UseComposerReturn {
   const initialAgentsRef = useRef(initialMentionedAgents ?? []);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialInput);
   const [mentionedPaths, setMentionedPaths] = useState<string[]>([]);
   // Tracks the pinned path the user explicitly dismissed. The chip is hidden
   // only while this equals the active `pinnedPagePath`; navigating to a
@@ -340,7 +343,7 @@ export function useComposer({
         return;
       }
     },
-    [showDropdown, filteredItems, mentionIndex, insertMention, submit]
+    [showDropdown, filteredItems, mentionIndex, insertMention, submit, input]
   );
 
   return {

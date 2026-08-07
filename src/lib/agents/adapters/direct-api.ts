@@ -7,6 +7,14 @@ import {
   readDirectApiKey,
   type DirectApiProviderConfig,
 } from "../providers/direct-api";
+import {
+  CABINET_AGENT_TOOL_DEFINITIONS,
+  executeCabinetAgentTool,
+} from "@/lib/tools/tool-agent-bridge";
+import {
+  assertWritablePath,
+  readKnowledgeSources,
+} from "@/lib/knowledge-sources/store";
 import type {
   AdapterEnvironmentTestResult,
   AgentExecutionAdapter,
@@ -49,7 +57,7 @@ type ApiResponse = {
   error?: { message?: string; code?: string };
 };
 
-const cabinetTools = [
+const cabinetFileTools = [
   {
     type: "function",
     function: {
@@ -139,6 +147,11 @@ const cabinetTools = [
   },
 ] as const;
 
+const cabinetTools = [
+  ...cabinetFileTools,
+  ...CABINET_AGENT_TOOL_DEFINITIONS,
+];
+
 function safeWorkspacePath(input: unknown, cwd: string): string {
   if (typeof input !== "string" || !input.trim()) {
     throw new Error("A workspace path is required.");
@@ -166,6 +179,88 @@ function safeWorkspacePath(input: unknown, cwd: string): string {
 
 function relativeWorkspacePath(absolutePath: string): string {
   return path.relative(path.resolve(DATA_DIR), absolutePath).split(path.sep).join("/") || ".";
+}
+
+function isWithin(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+async function realPathForAccess(candidate: string): Promise<string> {
+  let cursor = candidate;
+  const missing: string[] = [];
+  while (true) {
+    try {
+      const real = await fs.realpath(cursor);
+      return path.join(real, ...missing.reverse());
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      const parent = path.dirname(cursor);
+      if (parent === cursor) throw error;
+      missing.push(path.basename(cursor));
+      cursor = parent;
+    }
+  }
+}
+
+async function owningCabinetPath(cwd: string): Promise<string> {
+  const root = path.resolve(DATA_DIR);
+  let cursor = path.resolve(cwd);
+  while (cursor === root || cursor.startsWith(`${root}${path.sep}`)) {
+    try {
+      const manifest = await fs.stat(path.join(cursor, ".cabinet"));
+      if (manifest.isFile()) {
+        const relative = path.relative(root, cursor).split(path.sep).join("/");
+        if (relative) return relative;
+      }
+    } catch {
+      // Keep walking toward the managed data root.
+    }
+    if (cursor === root) break;
+    cursor = path.dirname(cursor);
+  }
+  throw new Error("The active workspace is not inside a Cabinet room.");
+}
+
+export async function authorizeDirectApiWorkspacePath(
+  input: unknown,
+  cwd: string,
+  access: "read" | "write" | "delete",
+): Promise<string> {
+  const candidate = safeWorkspacePath(input, cwd);
+  const lexicalPath = relativeWorkspacePath(candidate);
+  if (access !== "read") {
+    await assertWritablePath(lexicalPath);
+  }
+
+  // Deleting a link removes the link itself, not its target. This lets a user
+  // disconnect a bad or stale mount without granting access through it.
+  if (access === "delete") {
+    const stat = await fs.lstat(candidate).catch(() => null);
+    if (stat?.isSymbolicLink()) return candidate;
+  }
+
+  const [realRoot, realCandidate] = await Promise.all([
+    fs.realpath(cwd),
+    realPathForAccess(candidate),
+  ]);
+  if (isWithin(realRoot, realCandidate)) return candidate;
+
+  const cabinetPath = await owningCabinetPath(cwd);
+  const sources = await readKnowledgeSources(cabinetPath);
+  for (const source of sources) {
+    if (!source.enabled || (access !== "read" && source.policy !== "read-write")) {
+      continue;
+    }
+    const realSource = await fs.realpath(source.absPath).catch(() => null);
+    if (realSource && isWithin(realSource, realCandidate)) return candidate;
+  }
+
+  throw new Error(
+    access === "read"
+      ? "Path resolves outside this Cabinet and its connected knowledge sources."
+      : "Path is not writable from this Cabinet.",
+  );
 }
 
 async function listWorkspace(
@@ -212,31 +307,31 @@ async function executeTool(
 
   try {
     if (name === "list_files") {
-      const directory = safeWorkspacePath(args.path || ".", cwd);
+      const directory = await authorizeDirectApiWorkspacePath(args.path || ".", cwd, "read");
       const items = await listWorkspace(directory, args.recursive === true);
       return items.length ? items.join("\n") : "(empty directory)";
     }
     if (name === "read_file") {
-      const filename = safeWorkspacePath(args.path, cwd);
+      const filename = await authorizeDirectApiWorkspacePath(args.path, cwd, "read");
       const stat = await fs.stat(filename);
       if (!stat.isFile()) return "Error: path is not a file.";
       if (stat.size > MAX_READ_BYTES) return `Error: file is larger than ${MAX_READ_BYTES} bytes.`;
       return await fs.readFile(filename, "utf8");
     }
     if (name === "write_file") {
-      const filename = safeWorkspacePath(args.path, cwd);
+      const filename = await authorizeDirectApiWorkspacePath(args.path, cwd, "write");
       if (typeof args.content !== "string") return "Error: content must be a string.";
       await fs.mkdir(path.dirname(filename), { recursive: true });
       await fs.writeFile(filename, args.content, "utf8");
       return `Saved ${relativeWorkspacePath(filename)} (${Buffer.byteLength(args.content)} bytes).`;
     }
     if (name === "make_directory") {
-      const directory = safeWorkspacePath(args.path, cwd);
+      const directory = await authorizeDirectApiWorkspacePath(args.path, cwd, "write");
       await fs.mkdir(directory, { recursive: true });
       return `Created ${relativeWorkspacePath(directory)}.`;
     }
     if (name === "delete_path") {
-      const target = safeWorkspacePath(args.path, cwd);
+      const target = await authorizeDirectApiWorkspacePath(args.path, cwd, "delete");
       if (
         path.resolve(target) === path.resolve(DATA_DIR) ||
         path.resolve(target) === path.resolve(cwd)
@@ -249,7 +344,7 @@ async function executeTool(
     if (name === "search_files") {
       const query = typeof args.query === "string" ? args.query : "";
       if (!query) return "Error: query is required.";
-      const directory = safeWorkspacePath(args.path || ".", cwd);
+      const directory = await authorizeDirectApiWorkspacePath(args.path || ".", cwd, "read");
       const files = await collectTextFiles(directory);
       const matches: string[] = [];
       for (const filename of files) {
@@ -268,6 +363,18 @@ async function executeTool(
         }
       }
       return matches.length ? matches.join("\n") : "No matches.";
+    }
+    if (
+      CABINET_AGENT_TOOL_DEFINITIONS.some(
+        (definition) => definition.function.name === name,
+      )
+    ) {
+      const cabinetPath = await owningCabinetPath(cwd);
+      return await executeCabinetAgentTool(
+        cabinetPath,
+        name,
+        args,
+      );
     }
     return `Error: unknown tool ${name}.`;
   } catch (error) {
@@ -356,7 +463,7 @@ function createDirectApiAdapter(config: DirectApiProviderConfig): AgentExecution
         {
           role: "system",
           content:
-            "You are running inside Cabinet's hosted edition. Use the provided file tools whenever the request asks you to create, update, organize, inspect, or delete Cabinet knowledge. Relative paths resolve inside the current Cabinet. Work only inside the Cabinet workspace. After tool work, explain the outcome concisely and name every file changed.",
+            "You are running inside Cabinet's hosted edition. Use the provided file tools whenever the request asks you to create, update, organize, inspect, or delete Cabinet knowledge. Use list_cabinet_tools and use_cabinet_tool when an installed tool matches the work. You may propose a new tool or a new version of an installed tool, but a person must approve it before it becomes active. Relative paths resolve inside the current Cabinet. Work only inside the Cabinet workspace. After tool work, explain the outcome concisely and name every file or Cabinet Tool record changed.",
         },
         { role: "user", content: ctx.prompt },
       ];

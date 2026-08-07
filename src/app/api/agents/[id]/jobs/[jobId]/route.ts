@@ -13,6 +13,7 @@ import {
 import { normalizeCabinetPath } from "@/lib/cabinets/paths";
 import { minuteIso } from "@/lib/agents/cron-compute";
 import { withinSeriesWindow } from "@/lib/agents/one-off";
+import { applyCabinetToolEvent } from "@/lib/tools/tool-platform";
 
 export async function GET(
   req: NextRequest,
@@ -93,6 +94,14 @@ export async function PUT(
         return NextResponse.json({ ok: true, skipped: "series-window" });
       }
       const run = await executeJob(existing, { scheduledAt });
+      const eventCabinetPath = cabinetPath || existing.cabinetPath;
+      if (eventCabinetPath) {
+        await applyCabinetToolEvent(eventCabinetPath, {
+          type: "schedule.fired",
+          sourceId: run.id,
+          payload: { jobId: existing.id, status: run.status },
+        }).catch(() => []);
+      }
       return NextResponse.json({ ok: true, run });
     }
 

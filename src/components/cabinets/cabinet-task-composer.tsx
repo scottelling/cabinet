@@ -39,6 +39,7 @@ export function CabinetTaskComposer({
   cabinetDescription,
   requestedAgent,
   focusRequest,
+  initialPrompt,
   onNavigate,
 }: {
   cabinetPath: string;
@@ -48,9 +49,9 @@ export function CabinetTaskComposer({
   cabinetDescription?: string;
   requestedAgent?: CabinetAgentSummary | null;
   focusRequest?: number;
+  initialPrompt?: string;
   onNavigate: (agentSlug: string, agentCabinetPath: string, conversationId: string) => void;
 }) {
-  const { t } = useLocale();
   const [pickedAgent, setPickedAgent] = useState<CabinetAgentSummary | null>(null);
   const [taskRuntime, setTaskRuntime] = useState<TaskRuntimeSelection>({});
   const [handoffOpen, setHandoffOpen] = useState(false);
@@ -129,6 +130,7 @@ export function CabinetTaskComposer({
     disabled: !selectedAgent,
     attachments,
     stagingClientUuid,
+    initialInput: initialPrompt,
     getMentionInsertBehavior: (item) => {
       if (item.type !== "agent") return;
       const nextAgent =
@@ -345,4 +347,3 @@ function AgentPickerCompact({
     </DropdownMenu>
   );
 }
-

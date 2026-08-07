@@ -28,6 +28,7 @@ test("buildPath: cabinet views behind the /-/ marker", () => {
   assert.equal(buildPath({ type: "agent", cabinetPath: cab, slug: "harel" }, null), `/room/${cab}/-/agents/harel`);
   assert.equal(buildPath({ type: "tasks", cabinetPath: cab }, null), `/room/${cab}/-/tasks`);
   assert.equal(buildPath({ type: "task", cabinetPath: cab, taskId: "t-1" }, null), `/room/${cab}/-/tasks/t-1`);
+  assert.equal(buildPath({ type: "tool", cabinetPath: cab, slug: "research-brief" }, null), `/room/${cab}/-/tools/research-brief`);
 });
 
 test("parsePath: globals", () => {
@@ -51,6 +52,11 @@ test("parsePath: /-/ marker splits cabinet from view at any depth", () => {
   assert.deepEqual(parsePath("/room/a/b/c/-/agents/harel"), { kind: "agent", cabinetPath: "a/b/c", slug: "harel" });
   assert.deepEqual(parsePath("/room/a/b/c/-/tasks"), { kind: "tasks", cabinetPath: "a/b/c" });
   assert.deepEqual(parsePath("/room/a/b/c/-/tasks/t-9"), { kind: "task", cabinetPath: "a/b/c", taskId: "t-9" });
+  assert.deepEqual(parsePath("/room/a/b/c/-/tools/research-brief"), {
+    kind: "tool",
+    cabinetPath: "a/b/c",
+    toolId: "research-brief",
+  });
 });
 
 test("round-trip: parsePath(buildPath(x)) is stable for nested paths", () => {
@@ -63,6 +69,7 @@ test("round-trip: parsePath(buildPath(x)) is stable for nested paths", () => {
     [{ type: "agent", cabinetPath: cab, slug: "harel" }, null],
     [{ type: "tasks", cabinetPath: cab }, null],
     [{ type: "task", cabinetPath: cab, taskId: "launch review" }, null],
+    [{ type: "tool", cabinetPath: cab, slug: "research-brief" }, null],
     [{ type: "settings", slug: "providers" }, null],
   ];
   for (const [section, pagePath] of cases) {
@@ -83,6 +90,8 @@ test("round-trip: parsePath(buildPath(x)) is stable for nested paths", () => {
       assert.deepEqual(route, { kind: "tasks", cabinetPath: cab });
     } else if (section.type === "task") {
       assert.deepEqual(route, { kind: "task", cabinetPath: cab, taskId: "launch review" });
+    } else if (section.type === "tool") {
+      assert.deepEqual(route, { kind: "tool", cabinetPath: cab, toolId: "research-brief" });
     } else if (section.type === "settings") {
       assert.deepEqual(route, { kind: "settings", slug: "providers" });
     }

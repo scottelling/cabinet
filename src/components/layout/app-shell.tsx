@@ -122,6 +122,13 @@ const IntegrationsHubPage = dynamic(
     ),
   { ssr: false }
 );
+const ToolWorkspace = dynamic(
+  () =>
+    import("@/components/tools/tool-workspace").then(
+      (module) => module.ToolWorkspace
+    ),
+  { ssr: false }
+);
 const OnboardingWizard = dynamic(
   () =>
     import("@/components/onboarding/onboarding-wizard").then(
@@ -447,6 +454,14 @@ export function AppShell() {
         break;
       case "task":
         title = `Task – ${base}`;
+        break;
+      case "tool":
+        title = section.slug
+          ? `${section.slug
+              .split("-")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")} – ${base}`
+          : `Tools – ${base}`;
         break;
       case "settings":
         // Audit #062: include the active settings tab in the title so window
@@ -832,6 +847,11 @@ export function AppShell() {
     if (section.type === "settings") return <SettingsPage />;
     if (section.type === "integrations") return <IntegrationsHubPage />;
     if (section.type === "help") return <HelpPage />;
+    if (section.type === "tool" && section.cabinetPath && section.slug) {
+      return (
+        <ToolWorkspace cabinetPath={section.cabinetPath} toolId={section.slug} />
+      );
+    }
     if ((section.type === "cabinet" || section.type === "page") && appMode === "browse") {
       return <BrowserView />;
     }
@@ -1097,6 +1117,7 @@ export function AppShell() {
     isSelfSheetedViewer ||
     section.type === "tasks" ||
     section.type === "agents" ||
+    section.type === "tool" ||
     // The room/cabinet dashboard puts its header on the desk and wraps its body
     // in a ContentSheet, like agents/tasks — but only in edit mode; browse mode
     // hands off to BrowserView, which still wants the app-shell sheet.
@@ -1275,4 +1296,3 @@ export function AppShell() {
     </TaskRailProvider>
   );
 }
-

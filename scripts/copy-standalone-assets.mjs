@@ -17,11 +17,12 @@ const ROOT = process.cwd();
 
 // next.config.ts sets outputFileTracingRoot to the parent of the project dir
 // so the standalone bundle is nested one level deeper than usual.
-const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 const projectName = path.basename(ROOT); // "cabinet" in most setups
 const STANDALONE = path.join(ROOT, ".next", "standalone", projectName);
 
-if (!fs.existsSync(STANDALONE)) {
+if (process.env.VERCEL) {
+  console.log("[cabinet] Vercel serves static assets from its native build output.");
+} else if (!fs.existsSync(STANDALONE)) {
   // outputFileTracingRoot may have changed the nesting — fall back to the
   // flat layout (server.js directly in .next/standalone/).
   const flat = path.join(ROOT, ".next", "standalone");

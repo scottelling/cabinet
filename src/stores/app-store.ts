@@ -19,6 +19,7 @@ export type SectionType =
   | "agent"
   | "tasks"
   | "task"
+  | "tool"
   | "settings"
   | "registry"
   | "integrations"
