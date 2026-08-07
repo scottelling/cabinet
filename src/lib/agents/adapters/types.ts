@@ -54,6 +54,8 @@ export interface AdapterExecutionResult {
   billingType?: AdapterBillingType | null;
   summary?: string | null;
   output?: string | null;
+  /** Read-only web evidence collected by an agent browser during this run. */
+  browserEvidence?: import("../../../types/conversations").ConversationBrowserEvidence[];
   clearSession?: boolean;
 }
 

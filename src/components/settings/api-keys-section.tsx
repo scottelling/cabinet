@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, KeyRound, Loader2, Check, X } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  KeyRound,
+  Loader2,
+  Check,
+  X,
+  Globe2,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { showError } from "@/lib/ui/toast";
@@ -67,6 +77,20 @@ const PRESETS: Preset[] = [
     hint: "Runs Cabinet agents directly through the xAI API",
   },
   {
+    id: "cloudflare-account",
+    label: "Cloudflare Browser Run account ID",
+    envVar: "CLOUDFLARE_ACCOUNT_ID",
+    hint:
+      "Identifies the Cloudflare account that runs Cabinet's remote agent browser",
+  },
+  {
+    id: "cloudflare-browser-token",
+    label: "Cloudflare Browser Run API token",
+    envVar: "CLOUDFLARE_BROWSER_RUN_API_TOKEN",
+    hint:
+      "A scoped token with Browser Rendering - Edit permission; used only for read-only agent browsing",
+  },
+  {
     id: "google-sa",
     label: "Google Service Account",
     envVar: "GOOGLE_APPLICATION_CREDENTIALS",
@@ -88,6 +112,13 @@ export function ApiKeysSection(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormState>({ mode: "closed" });
+  const browserAccountReady = entries.some(
+    (entry) => entry.key === "CLOUDFLARE_ACCOUNT_ID" && entry.hasValue,
+  );
+  const browserTokenReady = entries.some(
+    (entry) => entry.key === "CLOUDFLARE_BROWSER_RUN_API_TOKEN" && entry.hasValue,
+  );
+  const browserReady = browserAccountReady && browserTokenReady;
 
   const refresh = useCallback(async () => {
     try {
@@ -204,6 +235,74 @@ export function ApiKeysSection(): React.ReactElement {
           <>Stored locally in <code className="text-[11px]">.cabinet.env</code> at the project root. Gitignored, owner-only file permissions.</>
         )}
       </p>
+
+      <div className="mb-4 rounded-xl border border-border bg-muted/15 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-primary">
+              <Globe2 className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-[13px] font-semibold text-foreground">
+                  Agent Browser
+                </h4>
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                    browserReady
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "border-border bg-background text-muted-foreground",
+                  )}
+                >
+                  {browserReady ? "Ready" : "Needs two Cloudflare values"}
+                </span>
+              </div>
+              <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
+                Agents can read public pages, collect links, and capture
+                screenshots. Kitesurf runs first; Chromium handles incompatible
+                pages. Sign-ins and form submissions stay blocked.
+              </p>
+            </div>
+          </div>
+          <Button
+            render={
+              <a
+                href="https://dash.cloudflare.com/profile/api-tokens"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+            variant="outline"
+            className="min-h-11 shrink-0 text-[12px]"
+          >
+            Cloudflare tokens
+            <ExternalLink className="ms-2 size-4" />
+          </Button>
+        </div>
+        {!browserReady && !loading ? (
+          <div className="mt-3 grid gap-2 text-[11px] text-muted-foreground sm:grid-cols-2">
+            <div
+              className={cn(
+                "rounded-lg border px-3 py-2",
+                browserAccountReady &&
+                  "text-emerald-600 dark:text-emerald-400",
+              )}
+            >
+              {browserAccountReady ? "✓" : "1."} Cloudflare account ID
+            </div>
+            <div
+              className={cn(
+                "rounded-lg border px-3 py-2",
+                browserTokenReady &&
+                  "text-emerald-600 dark:text-emerald-400",
+              )}
+            >
+              {browserTokenReady ? "✓" : "2."} Browser Run API token
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       {loading ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">

@@ -134,6 +134,7 @@ Cabinet is built around a few principles that we think matter deeply for the fut
 | **Scheduled Jobs** | Cron-based agent automation. Reddit scout every 6 hours. Weekly reports on Monday. |
 | **Embedded HTML Apps** | Drop an `index.html` in any folder — it renders as an iframe. Full-screen mode. |
 | **Web Terminal** | Interactive local AI CLI terminal in the browser. Kept for direct sessions, debugging, and future terminal-native features such as tmux-style Cabinet workflows. |
+| **Agent Browser** | Hosted agents can research current public pages, collect links, and save screenshots with visible source receipts. Kitesurf runs first with an automatic Chromium fallback. |
 | **File-Based Everything** | No database. Markdown on disk. Your data is always yours, always portable. |
 | **Git-Backed History** | Every save auto-commits. Full diff viewer. Restore any page to any point in time. |
 | **Missions & Tasks** | Break goals into missions. Track progress with Kanban boards. |
@@ -198,6 +199,7 @@ Cabinet no longer treats the browser terminal as the only way to run AI work.
 - **Per-run overrides** can choose provider, model, and reasoning effort, while personas and jobs can still inherit defaults.
 - **Current defaults** are structured local adapters: `claude_local` for Claude Code and `codex_local` for Codex CLI.
 - **The web terminal is staying** as a first-class interactive surface for direct CLI sessions and future terminal-native features such as Cabinet-managed tmux-like workspaces.
+- **Hosted agents can browse the public web** through Cabinet's read-only browser service. Sources and captures stay visible in the conversation, while sign-ins and external mutations remain blocked.
 
 ---
 

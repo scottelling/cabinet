@@ -210,6 +210,40 @@ test("finalizeConversation preserves artifacts merged from later turns", async (
   );
 });
 
+test("finalizeConversation preserves and deduplicates browser evidence", async () => {
+  const meta = await makeSingleShotConversation(
+    "Browser evidence",
+    "User request:\nresearch the page",
+    "Research complete.\n```cabinet\nSUMMARY: researched\n```",
+  );
+  const evidence = {
+    id: "browser-run-1",
+    action: "read" as const,
+    url: "https://example.com/research",
+    requestedEngine: "auto" as const,
+    engine: "kitesurf" as const,
+    fallbackUsed: false,
+    retrievedAt: "2026-08-07T12:00:00.000Z",
+    browserMs: 321,
+  };
+
+  await store.finalizeConversation(meta.id, {
+    status: "completed",
+    exitCode: 0,
+    output: "Research complete.\n```cabinet\nSUMMARY: researched\n```",
+    browserEvidence: [evidence],
+  });
+  await store.finalizeConversation(meta.id, {
+    status: "completed",
+    exitCode: 0,
+    output: "Research complete.\n```cabinet\nSUMMARY: researched\n```",
+    browserEvidence: [evidence],
+  });
+
+  const reread = await store.readConversationMeta(meta.id);
+  assert.deepEqual(reread?.browserEvidence, [evidence]);
+});
+
 test("read-repair strips placeholder artifacts and then stays idempotent", async () => {
   const meta = await makeSingleShotConversation(
     "Placeholder repair",

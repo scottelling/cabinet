@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { ConversationApprovalPanel } from "./conversation-approval-panel";
 import { useLocale } from "@/i18n/use-locale";
 import { SafeHtml } from "@/components/ui/safe-html";
+import { BrowserEvidencePanel } from "./browser-evidence-panel";
 
 function StatusBadge({ status }: { status: string }) {
   const { t } = useLocale();
@@ -158,6 +159,11 @@ export function ConversationResultView({
             </div>
           ) : null}
         </section>
+
+        <BrowserEvidencePanel
+          evidence={detail.meta.browserEvidence || []}
+          onOpenArtifact={onOpenArtifact}
+        />
 
         {/* Proposed agent actions — sibling view: task-conversation-page.tsx */}
         <ConversationApprovalPanel meta={detail.meta} onApproved={onRefresh} />

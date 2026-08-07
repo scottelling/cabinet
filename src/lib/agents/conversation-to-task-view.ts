@@ -51,6 +51,7 @@ export function conversationMetaToTaskMeta(meta: ConversationMeta): TaskMeta {
     jobName: meta.jobName,
     mentionedPaths: meta.mentionedPaths,
     artifactPaths: meta.artifactPaths,
+    browserEvidence: meta.browserEvidence,
     titlePinned: meta.titlePinned,
     summaryEditedAt: meta.summaryEditedAt,
     errorKind: meta.errorKind,

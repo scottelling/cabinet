@@ -18,6 +18,10 @@ This file lists behavior that must survive official Cabinet updates. Update it w
   metrics; lets people build those tools through a visual guided interface;
   and provides approved automations, audit history, disable/enable,
   recoverable removal, and rollback controls.
+- A hosted agent browser shared by the direct OpenAI, Anthropic, Gemini, and
+  xAI adapters: read-only public page extraction, visible links, screenshots,
+  Kitesurf-first execution, Chromium compatibility fallback, prompt-injection
+  boundaries, room-local audit receipts, and visible conversation evidence.
 - The shared Animation Kit as Cabinet's default visual system: exact published
   colors, Outfit interface type, JetBrains Mono technical type, solid tactile
   surfaces, purposeful motion, and full-size controls. The existing Appearance

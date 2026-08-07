@@ -698,6 +698,7 @@ export async function startConversationRun(
       output: string;
       exitCode: number;
       usage?: import("./adapters/types").AdapterUsageSummary;
+      browserEvidence?: import("../../types/conversations").ConversationBrowserEvidence[];
       classification?: import("../../types/conversations").ConversationErrorClassification | null;
       errorCode?: string;
     }): Promise<ConversationMeta> => {
@@ -719,6 +720,7 @@ export async function startConversationRun(
           errorKind: options.classification?.kind,
           errorHint: options.classification?.hint,
           errorRetryAfterSec: options.classification?.retryAfterSec,
+          browserEvidence: options.browserEvidence,
         },
         cabinetPath
       );
@@ -824,6 +826,7 @@ export async function startConversationRun(
         output,
         exitCode: failed ? result.exitCode ?? 1 : 0,
         usage: result.usage,
+        browserEvidence: result.browserEvidence,
         classification,
         errorCode: result.errorCode || undefined,
       });
@@ -1505,6 +1508,13 @@ async function runContinueInProcess(input: {
           reason: resumeReason,
         },
       };
+      if (result.browserEvidence?.length) {
+        const byId = new Map(
+          (next.browserEvidence || []).map((evidence) => [evidence.id, evidence]),
+        );
+        for (const evidence of result.browserEvidence) byId.set(evidence.id, evidence);
+        next.browserEvidence = Array.from(byId.values());
+      }
       if (failed && classified) {
         next.errorKind = classified.kind;
         next.errorHint = classified.hint;

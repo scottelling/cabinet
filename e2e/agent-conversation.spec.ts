@@ -97,5 +97,8 @@ test("the adapter invokes the CLI with Claude's print-mode contract", async () =
   // cwd is inside the KB. Load-bearing, not incidental: the agent writes files
   // with its own tools, so cwd IS the blast radius. A regression that launched it
   // in the repo root would hand an agent Cabinet's own source to edit.
-  expect(invocation.cwd.startsWith(cabinet.dataDir)).toBe(true);
+  expect(
+    invocation.cwd.startsWith(cabinet.dataDir),
+    `expected invocation cwd ${invocation.cwd} to start with ${cabinet.dataDir}`,
+  ).toBe(true);
 });
