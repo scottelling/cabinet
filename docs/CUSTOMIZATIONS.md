@@ -15,7 +15,8 @@ This file lists behavior that must survive official Cabinet updates. Update it w
 - A Cabinet Tools platform that lets rooms install removable declarative
   workspaces; lets hosted agents use tool data and propose new tools or
   versions during chat; renders stateful forms, tables, boards, charts, and
-  metrics; and provides approved automations, audit history, disable/enable,
+  metrics; lets people build those tools through a visual guided interface;
+  and provides approved automations, audit history, disable/enable,
   recoverable removal, and rollback controls.
 
 ## In Development Branches

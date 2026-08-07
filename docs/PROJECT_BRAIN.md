@@ -11,6 +11,9 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 ## Current Implemented State
 
 - `main` contains the Vercel-native version with direct AI-provider keys and Vercel Blob-backed workspace persistence.
+- `main` contains Cabinet Tools: removable room workspaces that agents can use
+  and propose during chat. People can also create them through the visual Tool
+  Builder without editing code or manifests.
 - Production is expected to deploy from `scottelling/cabinet` through Vercel.
 - `KB_PASSWORD` is intentionally unset, so the current site has no Cabinet password gate.
 - The official Cabinet project remains an update source, not the deployment source.
@@ -18,7 +21,8 @@ This repository adapts the open-source Cabinet platform for Scott's hosted use a
 
 ## Users And Core Workflows
 
-- Scott opens the hosted Cabinet homepage, manages agents and tasks, and supplies his own AI-provider keys through Cabinet settings.
+- Scott opens the hosted Cabinet homepage, manages agents, tasks, and room
+  tools, and supplies his own AI-provider keys through Cabinet settings.
 - Cabinet reads and writes durable workspace content through the hosted storage adapter.
 - GitHub branches and Vercel previews are used to review changes before production.
 

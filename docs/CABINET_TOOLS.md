@@ -18,6 +18,12 @@ navigation, agents, tasks, and approvals.
 
 - Tools install independently inside one room.
 - Installed tools appear on that room's homepage.
+- People can open **Build a tool** from the room homepage and create a complete
+  tool through five visual steps: basics, data, views, workflow, and review.
+- The visual builder supports typed fields, forms, tables, boards, charts,
+  summary metrics, starter agent actions, optional queued automations, and
+  explicit permission choices. It previews the resulting workspace before
+  installation and requires no manifest editing or application code.
 - Each tool can open a room-scoped workspace at
   `/room/<room>/-/tools/<tool-id>`.
 - Tool workspaces reuse Cabinet's shared agent composer, provider picker,
@@ -146,7 +152,8 @@ capability, not its raw secret.
 
 ## Human and agent flow
 
-1. A person installs a built-in tool, or an agent calls
+1. A person installs a built-in tool, builds one through **Build a tool**, or
+   an agent calls
    `propose_cabinet_tool` with a manifest.
 2. Cabinet validates the complete manifest before persisting it.
 3. Agent-created tools and updates appear as `Proposed by AI`, including every
