@@ -245,7 +245,18 @@ Append meaningful work receipts. Preserve prior entries.
   - Browser proof at phone, tablet, and desktop widths found no page overflow,
     no browser console errors, and no visible evidence control smaller than 44
     CSS pixels.
-- Release: Pending GitHub and production deployment proof.
+- Release:
+  - GitHub pull request 10 passed the hosted lint/unit, build/install-flow,
+    end-to-end, and Vercel checks and merged as
+    `122e0480f9ee140aded7024a5f846affc0781cf3`.
+  - Vercel production deployment `dpl_5Do3UmHNeCuBbFSx1tT9YFwukiyZ` serves the
+    agent browser setup at `https://cabinet.scottelling.com`.
+- Live check:
+  - The custom domain returned a healthy Cabinet without a login screen.
+  - Settings → Integrations → API Keys displayed the Agent Browser readiness
+    card and both required Cloudflare values after stored configuration loaded.
+  - At 320 CSS pixels wide, the live setup card remained readable and usable
+    inside Cabinet's phone navigation.
 - Open loops:
   - Real Cloudflare browsing remains off until an account ID and scoped Browser
     Run token are saved in Cabinet Settings.
