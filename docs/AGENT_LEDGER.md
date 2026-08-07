@@ -114,3 +114,31 @@ Append meaningful work receipts. Preserve prior entries.
     browser console errors.
 - Open loops:
   - Build and release the visual Tool Builder as the next independent change.
+
+## 2026-08-06 — Visual Tool Builder deployed
+
+- Agent: Codex
+- Scope: Added a visible **Build a tool** action to every room and a guided
+  five-step builder for data fields, workspace views, agent workflows,
+  automations, permissions, preview, and installation.
+- Deploy mode: Git-connected Vercel through pull request 5.
+- Production source: merge commit `e95035505bfb182ce3cd2e1f19abfdb714249c3f`.
+- Production deployment: `dpl_46SsvM22kQVNTHQX6tbnsocLvRDw`.
+- Verification:
+  - All 433 unit tests passed; lint had no errors; TypeScript and the Next.js
+    16.3 production build passed.
+  - GitHub lint/unit, packaged install-flow, and end-to-end jobs passed.
+  - The Vercel preview passed before merge.
+  - Local browser proof created a Campaign Tracker with typed fields, a form,
+    table, board, chart, metrics, starter agent action, queued automation, and
+    explicit permissions, then installed and opened the generated workspace.
+  - The builder at 320 CSS pixels had no page or dialog overflow and no visible
+    interactive control smaller than 44 pixels.
+- Live check:
+  - `https://cabinet.scottelling.com/room/scott-cabinet` showed **Build a tool**
+    without a login screen.
+  - The live builder opened on desktop and phone, advanced from Basics to Data,
+    and produced no browser console errors. No production tool was installed
+    during verification.
+- Open loops:
+  - None for this release.
