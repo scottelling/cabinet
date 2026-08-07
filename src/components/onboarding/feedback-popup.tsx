@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  StarExplosion,
-  formatGithubStars,
-} from "@/components/layout/star-explosion";
+import { formatGithubStars } from "@/components/layout/star-explosion";
 import { useGithubStatsStore } from "@/stores/github-stats-store";
 import { useLocale } from "@/i18n/use-locale";
 
@@ -57,30 +54,6 @@ const COPY: Record<
     q2Hint: "The thing that bugged you most. Be specific. \"X was confusing\" beats \"the UX\".",
   },
 };
-
-// Floating background emojis. Cabinet's "your files on your disk" vibe:
-// stationery, warmth, a little spark. Same animation pattern as
-// `src/components/help/demos/skills-demo.tsx`.
-interface FloatingEmoji {
-  glyph: string;
-  x: number; // % of viewport
-  y: number; // % of viewport
-  size: number; // px
-  rotate: number;
-  variant: "a" | "b" | "c";
-  delay: number; // ms
-}
-
-const FLOATING_EMOJIS: FloatingEmoji[] = [
-  { glyph: "💬", x: 6, y: 12, size: 64, rotate: -8, variant: "a", delay: 0 },
-  { glyph: "📝", x: 18, y: 78, size: 72, rotate: 6, variant: "b", delay: 200 },
-  { glyph: "💌", x: 88, y: 18, size: 68, rotate: 12, variant: "c", delay: 400 },
-  { glyph: "💡", x: 10, y: 50, size: 58, rotate: -4, variant: "b", delay: 600 },
-  { glyph: "☕", x: 86, y: 78, size: 76, rotate: -10, variant: "a", delay: 100 },
-  { glyph: "🌱", x: 82, y: 48, size: 56, rotate: 8, variant: "c", delay: 300 },
-  { glyph: "❤️", x: 50, y: 6, size: 52, rotate: -6, variant: "b", delay: 500 },
-  { glyph: "🌟", x: 50, y: 92, size: 56, rotate: 10, variant: "a", delay: 250 },
-];
 
 function getCount(): number {
   if (typeof window === "undefined") return 0;
@@ -144,58 +117,24 @@ interface PopupProps {
 }
 
 function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
-  const { t, dir } = useLocale();
+  const { t } = useLocale();
   const [rating, setRating] = useState<number>(0);
   const [q1, setQ1] = useState("");
   const [q2, setQ2] = useState("");
   const [background, setBackground] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
-  // GitHub stars: same shared store the status-bar uses, so a single fetch
-  // services both surfaces. The count-up + burst sequence mirrors the status
-  // bar's chip — when stars finally land, animate from 0 to N over 1.6s and
-  // fire the StarExplosion when the count reaches the target.
+  // GitHub stars: the shared store keeps this in sync with the status bar.
+  // The Animation Kit presents the value directly without ambient burst or
+  // count-up effects.
   const githubStars = useGithubStatsStore((s) => s.stars);
   const fetchStars = useGithubStatsStore((s) => s.fetchStars);
   const hasFetchedStarsOnce = useGithubStatsStore((s) => s.hasFetchedOnce);
-  const [displayStars, setDisplayStars] = useState<number | null>(githubStars);
-  const [starsExploding, setStarsExploding] = useState(false);
-  const starsAnimRef = useRef<number | null>(null);
-  const starsAnimated = useRef(hasFetchedStarsOnce);
+  const displayStars = githubStars;
 
   useEffect(() => {
     if (!hasFetchedStarsOnce) void fetchStars();
   }, [fetchStars, hasFetchedStarsOnce]);
-
-  useEffect(() => {
-    if (githubStars === null) return;
-    if (starsAnimated.current) {
-      // Already animated once during this session — sync without re-running.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayStars(githubStars);
-      return;
-    }
-    starsAnimated.current = true;
-    const target = githubStars;
-    const duration = 1600;
-    const startTime = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayStars(Math.round(target * eased));
-      if (progress < 1) {
-        starsAnimRef.current = requestAnimationFrame(tick);
-      } else {
-        setDisplayStars(target);
-        setStarsExploding(true);
-        window.setTimeout(() => setStarsExploding(false), 900);
-      }
-    };
-    starsAnimRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (starsAnimRef.current !== null) cancelAnimationFrame(starsAnimRef.current);
-    };
-  }, [githubStars]);
 
   // Translated copy lookup — falls through to the English baseline in COPY
   // if no key exists. Keeps the dashboard receiving English by default; the
@@ -272,52 +211,12 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[180] flex items-center justify-center bg-background/70 backdrop-blur-md overflow-hidden">
-      <style>{`
-        @keyframes cabinet-feedback-float-a {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes cabinet-feedback-float-b {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-        @keyframes cabinet-feedback-float-c {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-14px); }
-        }
-        @keyframes cabinet-feedback-pop-in {
-          0% { opacity: 0; transform: scale(0.6); }
-          100% { opacity: 0.7; transform: scale(1); }
-        }
-      `}</style>
-
-      {/* Floating emoji ambiance behind the modal. Decorative only. */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        {FLOATING_EMOJIS.map((e, i) => (
-          <span
-            key={i}
-            className="absolute select-none"
-            style={{
-              [dir === "rtl" ? "right" : "left"]: `${e.x}%`,
-              top: `${e.y}%`,
-              fontSize: e.size,
-              transform: `rotate(${e.rotate}deg)`,
-              opacity: 0,
-              filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.05))",
-              animation: `cabinet-feedback-pop-in 0.6s ease-out ${e.delay}ms forwards, cabinet-feedback-float-${e.variant} ${4 + i * 0.3}s ease-in-out ${800 + i * 120}ms infinite`,
-            }}
-          >
-            {e.glyph}
-          </span>
-        ))}
-      </div>
-
-      <div className="relative max-w-lg w-[92vw] rounded-xl border border-border bg-card p-6 shadow-xl">
+    <div className="fixed inset-0 z-[180] flex items-center justify-center overflow-hidden bg-[var(--overlay,var(--background))] p-4">
+      <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-[var(--radius-card,var(--radius-xl))] border border-border bg-popover p-5 shadow-[var(--shadow-panel)] sm:p-6">
         <button
           type="button"
           aria-label={t("feedback:close")}
-          className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="absolute right-2 top-2 inline-flex size-11 items-center justify-center rounded-[var(--radius-control,var(--radius-lg))] text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={dismiss}
         >
           <X className="h-4 w-4" />
@@ -345,7 +244,7 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
                   onClick={() => setRating(n)}
                   aria-label={n === 1 ? t("feedback:starsCount", { n }) : t("feedback:starsCountPlural", { n })}
                   className={cn(
-                    "rounded-md p-1 transition-colors",
+                    "inline-flex size-11 items-center justify-center rounded-[var(--radius-control,var(--radius-lg))] transition-colors",
                     n <= rating
                       ? "text-amber-400 hover:text-amber-500"
                       : "text-muted-foreground/40 hover:text-muted-foreground/60"
@@ -359,9 +258,7 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
             </div>
           </div>
           {/* Compact GitHub-star CTA — pinned to the right of the rating row,
-              with a short prompt above mirroring the rating's "How's it going
-              so far?" question. Same store + count-up + burst as the
-              status-bar chip. */}
+              with a short prompt above mirroring the rating question. */}
           <div className="flex flex-col items-end gap-2">
             <span className="text-[12px] font-medium text-muted-foreground">
               {t("feedback:likeCabinet")}
@@ -375,9 +272,8 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
                   ? t("feedback:starTooltipUnknown")
                   : t("feedback:starTooltipWithCount", { count: formatGithubStars(displayStars) })
               }
-              className="relative inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300 transition-colors hover:bg-amber-500/15 hover:border-amber-500/50"
+              className="relative inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-control,var(--radius-lg))] border border-border bg-secondary px-3 text-[11px] font-semibold text-secondary-foreground transition-colors hover:border-primary/30 hover:bg-accent hover:text-accent-foreground"
             >
-              {starsExploding && <StarExplosion />}
               <Star className="h-3 w-3 fill-current" />
               <span className="tabular-nums">
                 {displayStars === null ? t("feedback:starLabel") : formatGithubStars(displayStars)}
@@ -396,7 +292,7 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
             placeholder={copy.q1Hint}
             rows={2}
             maxLength={Q_MAX}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12.5px] resize-none focus:outline-none focus:ring-2 focus:ring-ring/50"
+            className="w-full rounded-[var(--radius-control,var(--radius-lg))] border border-border bg-input px-3 py-2.5 text-[12.5px] resize-none focus:outline-none focus:ring-2 focus:ring-ring/50"
           />
           <div className="mt-0.5 text-right text-[10.5px] text-muted-foreground/60">
             {q1.length} / {Q_MAX}
@@ -413,7 +309,7 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
             placeholder={copy.q2Hint}
             rows={2}
             maxLength={Q_MAX}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12.5px] resize-none focus:outline-none focus:ring-2 focus:ring-ring/50"
+            className="w-full rounded-[var(--radius-control,var(--radius-lg))] border border-border bg-input px-3 py-2.5 text-[12.5px] resize-none focus:outline-none focus:ring-2 focus:ring-ring/50"
           />
           <div className="mt-0.5 text-right text-[10.5px] text-muted-foreground/60">
             {q2.length} / {Q_MAX}
@@ -433,7 +329,7 @@ function FeedbackForm({ trigger, launchCount, onClose }: PopupProps) {
             onChange={(e) => setBackground(e.target.value.slice(0, BACKGROUND_MAX))}
             placeholder={t("feedback:rolePlaceholder")}
             maxLength={BACKGROUND_MAX}
-            className="w-full rounded-md border border-border bg-background px-2.5 py-2 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-ring/50"
+            className="h-11 w-full rounded-[var(--radius-control,var(--radius-lg))] border border-border bg-input px-3 text-[12.5px] focus:outline-none focus:ring-2 focus:ring-ring/50"
           />
           <div className="mt-0.5 text-right text-[10.5px] text-muted-foreground/60">
             {background.length} / {BACKGROUND_MAX}
